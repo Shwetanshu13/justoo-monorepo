@@ -1,0 +1,16 @@
+{
+  "name": "monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.6.0",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.10"
+  }
+}

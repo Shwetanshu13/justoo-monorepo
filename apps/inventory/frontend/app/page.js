@@ -1,0 +1,27 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
+
+export default function HomePage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        router.push('/dashboard');
+      } else {
+        router.push('/login');
+      }
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  return null;
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@justoo/inventory-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "build": "echo no-build",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "seed:admin": "node seedAdmin.js",
+    "create:user": "node createUser.js",
+    "create:user-interactive": "node createUserInteractive.js",
+    "create:test-users": "node createUser.js --create-test-users",
+    "create:minimal-users": "node createTestUsers.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@9.6.0",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "drizzle-kit": "^0.31.4",
+    "drizzle-orm": "^0.44.4",
+    "express": "4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongo": "^0.1.0",
+    "pg": "^8.16.3",
+    "@justoo/db": "workspace:*"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.1"
+  }
+}

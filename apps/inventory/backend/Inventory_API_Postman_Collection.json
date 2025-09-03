@@ -1,0 +1,700 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Inventory Management API",
+    "description": "Complete API testing collection for the Inventory Management System with authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('admin_token', response.data.token);",
+                  "    pm.environment.set('admin_user_id', response.data.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login as admin user and save token"
+          }
+        },
+        {
+          "name": "Login Viewer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('viewer_token', response.data.token);",
+                  "    pm.environment.set('viewer_user_id', response.data.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"viewer\",\n    \"password\": \"viewer123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login as viewer user and save token"
+          }
+        },
+        {
+          "name": "Get Profile (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "profile"]
+            },
+            "description": "Get admin user profile"
+          }
+        },
+        {
+          "name": "Get Profile (Viewer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "profile"]
+            },
+            "description": "Get viewer user profile"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"currentPassword\": \"admin123\",\n    \"newPassword\": \"newpassword123\",\n    \"confirmPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "change-password"]
+            },
+            "description": "Change user password"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Logout user"
+          }
+        }
+      ],
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "Inventory Management",
+      "item": [
+        {
+          "name": "Get All Items (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/items?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "items"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all inventory items as admin"
+          }
+        },
+        {
+          "name": "Get All Items (Viewer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/items?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "items"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all inventory items as viewer"
+          }
+        },
+        {
+          "name": "Add Item (Admin Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('test_item_id', response.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Apple\",\n    \"description\": \"Fresh red apples for testing\",\n    \"price\": 150.50,\n    \"quantity\": 100,\n    \"minStockLevel\": 10,\n    \"discount\": 5.00,\n    \"unit\": \"kg\",\n    \"category\": \"Fruits\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inventory/items",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "items"]
+            },
+            "description": "Add new inventory item (admin only)"
+          }
+        },
+        {
+          "name": "Add Item (Viewer - Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Test Banana\",\n    \"description\": \"This should fail for viewer\",\n    \"price\": 80.00,\n    \"quantity\": 50,\n    \"unit\": \"kg\",\n    \"category\": \"Fruits\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inventory/items",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "items"]
+            },
+            "description": "Try to add item as viewer (should return 403)"
+          }
+        },
+        {
+          "name": "Get Item by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/items/{{test_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "items", "{{test_item_id}}"]
+            },
+            "description": "Get specific item by ID"
+          }
+        },
+        {
+          "name": "Update Item (Admin Only)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Updated Test Apple\",\n    \"price\": 160.00,\n    \"quantity\": 80\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/inventory/items/{{test_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "items", "{{test_item_id}}"]
+            },
+            "description": "Update inventory item (admin only)"
+          }
+        },
+        {
+          "name": "Get In-Stock Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/stock/in-stock",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "stock", "in-stock"]
+            },
+            "description": "Get all in-stock items"
+          }
+        },
+        {
+          "name": "Get Out-of-Stock Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/stock/out-of-stock",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "stock", "out-of-stock"]
+            },
+            "description": "Get all out-of-stock items"
+          }
+        },
+        {
+          "name": "Get Low Stock Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/stock/low-stock",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "stock", "low-stock"]
+            },
+            "description": "Get all low stock items"
+          }
+        },
+        {
+          "name": "Get Available Units",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/units",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "units"]
+            },
+            "description": "Get available units (public endpoint)"
+          }
+        },
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/dashboard/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "dashboard", "stats"]
+            },
+            "description": "Get dashboard statistics"
+          }
+        },
+        {
+          "name": "Delete Item (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/items/{{test_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "items", "{{test_item_id}}"]
+            },
+            "description": "Delete inventory item (soft delete, admin only)"
+          }
+        }
+      ],
+      "description": "Inventory management endpoints"
+    },
+    {
+      "name": "Order Management",
+      "item": [
+        {
+          "name": "Check Stock Availability",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"items\": [\n        {\n            \"itemId\": 1,\n            \"requiredQuantity\": 5\n        },\n        {\n            \"itemId\": 2,\n            \"requiredQuantity\": 3\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/check-availability",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "check-availability"]
+            },
+            "description": "Check stock availability before placing order"
+          }
+        },
+        {
+          "name": "Place Order (Any User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data.order) {",
+                  "        pm.environment.set('test_order_id', response.data.order.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"orderItems\": [\n        {\n            \"itemId\": 1,\n            \"quantity\": 3\n        },\n        {\n            \"itemId\": 2,\n            \"quantity\": 2\n        }\n    ],\n    \"notes\": \"Test order from Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/place-order",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "place-order"]
+            },
+            "description": "Place a new order"
+          }
+        },
+        {
+          "name": "Get All Orders (Viewer - Own Orders)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get orders (viewer sees only their own orders)"
+          }
+        },
+        {
+          "name": "Get All Orders (Admin - All Orders)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all orders (admin sees all orders)"
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{viewer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{test_order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{test_order_id}}"]
+            },
+            "description": "Get specific order with items"
+          }
+        },
+        {
+          "name": "Cancel Order (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"orderItems\": [\n        {\n            \"itemId\": 1,\n            \"quantity\": 3\n        },\n        {\n            \"itemId\": 2,\n            \"quantity\": 2\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/cancel-order",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "cancel-order"]
+            },
+            "description": "Cancel order and restore inventory (admin only)"
+          }
+        },
+        {
+          "name": "Bulk Update Stock (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"updates\": [\n        {\n            \"itemId\": 1,\n            \"quantity\": 50,\n            \"operation\": \"add\"\n        },\n        {\n            \"itemId\": 2,\n            \"quantity\": 100,\n            \"operation\": \"set\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/bulk-update",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "bulk-update"]
+            },
+            "description": "Bulk update inventory quantities (admin only)"
+          }
+        }
+      ],
+      "description": "Order management endpoints"
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "System health check"
+          }
+        },
+        {
+          "name": "Test Authentication Error",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/inventory/items",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "items"]
+            },
+            "description": "Test authentication error (no token)"
+          }
+        }
+      ],
+      "description": "System and testing endpoints"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001",
+      "type": "string"
+    }
+  ]
+}

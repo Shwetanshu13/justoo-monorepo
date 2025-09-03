@@ -1,0 +1,17 @@
+{
+  "root": true,
+  "env": {
+    "es2022": true,
+    "browser": true,
+    "node": true
+  },
+  "extends": ["eslint:recommended"],
+  "overrides": [
+    {
+      "files": ["apps/web/**/*"],
+      "plugins": ["react"],
+      "extends": ["plugin:react/recommended"],
+      "settings": { "react": { "version": "detect" } }
+    }
+  ]
+}
