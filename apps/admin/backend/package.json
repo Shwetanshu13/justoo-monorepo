@@ -24,8 +24,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
-    "ws": "^8.18.3",
-    "@justoo/db": "workspace:*"
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.4",
