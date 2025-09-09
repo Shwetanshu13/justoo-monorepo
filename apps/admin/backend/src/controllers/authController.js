@@ -1,8 +1,11 @@
 // Auth Controller
+import db from '../config/dbConfig.js';
 import { findByUsername } from '../utils/db.js';
 import { comparePassword, generateToken, extractTokenFromHeader } from '../utils/auth.js';
 import { unauthorizedResponse, errorResponse, successResponse } from '../utils/response.js';
 import { justoo_admins as admin } from '@justoo/db';
+import { eq } from 'drizzle-orm';
+import bcrypt from 'bcrypt';
 
 export const signin = async (req, res) => {
     const { username, password } = req.body;
@@ -92,5 +95,101 @@ export const refreshToken = async (req, res) => {
     } catch (error) {
         console.error('Error refreshing token:', error);
         return errorResponse(res, 'Error refreshing token');
+    }
+};
+
+// Update profile (username/email)
+export const updateProfile = async (req, res) => {
+    try {
+        const user = req.user;
+        const { username, email } = req.body;
+
+        if (!username || !email) {
+            return errorResponse(res, 'Username and email are required', 400);
+        }
+
+        // Basic validations
+        if (username.length < 3) {
+            return errorResponse(res, 'Username must be at least 3 characters long', 400);
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return errorResponse(res, 'Please provide a valid email address', 400);
+        }
+
+        // Check uniqueness (excluding current user)
+        const existingUsername = await db
+            .select({ id: admin.id })
+            .from(admin)
+            .where(eq(admin.username, username))
+            .limit(1);
+
+        if (existingUsername.length && existingUsername[0].id !== user.id) {
+            return errorResponse(res, 'Username already in use', 409);
+        }
+
+        const existingEmail = await db
+            .select({ id: admin.id })
+            .from(admin)
+            .where(eq(admin.email, email))
+            .limit(1);
+
+        if (existingEmail.length && existingEmail[0].id !== user.id) {
+            return errorResponse(res, 'Email already in use', 409);
+        }
+
+        const updated = await db
+            .update(admin)
+            .set({ username, email })
+            .where(eq(admin.id, user.id))
+            .returning({ id: admin.id, username: admin.username, email: admin.email, role: admin.role });
+
+        if (!updated.length) {
+            return errorResponse(res, 'Failed to update profile', 500);
+        }
+
+        return successResponse(res, { user: updated[0] }, 'Profile updated successfully');
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        return errorResponse(res, 'Error updating profile');
+    }
+};
+
+// Change password
+export const changePassword = async (req, res) => {
+    try {
+        const user = req.user;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return errorResponse(res, 'Current and new password are required', 400);
+        }
+        if (newPassword.length < 6) {
+            return errorResponse(res, 'Password must be at least 6 characters long', 400);
+        }
+
+        // Get user with password
+        const rows = await db
+            .select({ id: admin.id, password: admin.password })
+            .from(admin)
+            .where(eq(admin.id, user.id))
+            .limit(1);
+
+        if (!rows.length) {
+            return errorResponse(res, 'User not found', 404);
+        }
+
+        const isValid = await comparePassword(currentPassword, rows[0].password);
+        if (!isValid) {
+            return unauthorizedResponse(res, 'Current password is incorrect');
+        }
+
+        const hashed = await bcrypt.hash(newPassword, 12);
+        await db.update(admin).set({ password: hashed }).where(eq(admin.id, user.id));
+
+        return successResponse(res, null, 'Password updated successfully');
+    } catch (error) {
+        console.error('Error changing password:', error);
+        return errorResponse(res, 'Error changing password');
     }
 };

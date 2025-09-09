@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { AuthProvider } from '@/contexts/AuthContext';
 import toast from 'react-hot-toast';
 import {
     EyeIcon,
@@ -26,17 +25,22 @@ function LoginForm() {
     } = useForm();
 
     // Redirect if already logged in
-    if (!loading && user) {
-        router.push('/dashboard');
-        return null;
-    }
+    useEffect(() => {
+        if (!isSubmitting && !loading && user) {
+            router.replace('/dashboard');
+        }
+    }, [isSubmitting, loading, user, router]);
 
     const onSubmit = async (data) => {
         setIsSubmitting(true);
         try {
-            await login(data.username, data.password);
-            toast.success('Login successful!');
-            router.push('/dashboard');
+            const result = await login(data.username, data.password);
+            if (result?.user) {
+                toast.success('Login successful!');
+                router.push('/dashboard');
+            } else {
+                throw new Error('Login did not establish a session');
+            }
         } catch (error) {
             const message = error.response?.data?.message || 'Login failed';
             toast.error(message);
@@ -45,7 +49,7 @@ function LoginForm() {
         }
     };
 
-    if (loading) {
+    if (loading || user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <LoadingSpinner size="lg" />
@@ -149,9 +153,5 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-    return (
-        <AuthProvider>
-            <LoginForm />
-        </AuthProvider>
-    );
+    return <LoginForm />;
 }

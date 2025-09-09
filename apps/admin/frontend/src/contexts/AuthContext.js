@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import Cookies from 'js-cookie';
 import { authAPI } from '@/lib/api';
 
 const AuthContext = createContext();
@@ -24,42 +23,35 @@ export const AuthProvider = ({ children }) => {
 
     const checkAuth = async () => {
         try {
-            const token = Cookies.get('admin_token');
-            if (token) {
-                const response = await authAPI.getProfile();
-                setUser(response.data.data);
-            }
+            const response = await authAPI.getProfile();
+            const nextUser = response.data?.data?.user || null;
+            setUser(nextUser);
+            return nextUser;
         } catch (error) {
-            console.error('Auth check failed:', error);
-            Cookies.remove('admin_token');
+            setUser(null);
+            return null;
         } finally {
             setLoading(false);
         }
     };
 
     const login = async (username, password) => {
-        try {
-            const response = await authAPI.login({ username, password });
-            const { token, admin } = response.data.data;
-
-            Cookies.set('admin_token', token, { expires: 7 });
-            setUser(admin);
-
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
+        const response = await authAPI.login({ username, password });
+        // After login, backend sets httpOnly cookie. Fetch profile next.
+        const me = await checkAuth();
+        return { api: response.data, user: me };
     };
 
     const logout = async () => {
         try {
             await authAPI.logout();
-        } catch (error) {
-            console.error('Logout error:', error);
         } finally {
-            Cookies.remove('admin_token');
             setUser(null);
         }
+    };
+
+    const updateUser = (partial) => {
+        setUser((prev) => ({ ...(prev || {}), ...(partial || {}) }));
     };
 
     const value = {
@@ -67,7 +59,8 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         loading,
-        checkAuth
+        checkAuth,
+        updateUser,
     };
 
     return (

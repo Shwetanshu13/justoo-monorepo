@@ -1,39 +1,19 @@
 import axios from 'axios';
-import Cookies from 'js-cookie';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true,
 });
 
-// Request interceptor to add token
-api.interceptors.request.use(
-    (config) => {
-        const token = Cookies.get('admin_token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
-
-// Response interceptor to handle token expiration
+// Keep interceptors minimal; let callers handle 401s
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            Cookies.remove('admin_token');
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 // Auth API

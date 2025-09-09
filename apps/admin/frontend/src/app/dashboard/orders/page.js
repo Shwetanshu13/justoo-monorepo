@@ -218,9 +218,22 @@ export default function OrdersPage() {
         try {
             setLoading(true);
             const response = await api.get('/orders');
-
-            if (response.success) {
-                setOrders(response.data);
+            const ok = response?.data?.success;
+            const payload = response?.data?.data;
+            if (ok && payload?.orders) {
+                // Normalize fields for UI
+                const normalized = payload.orders.map((o) => ({
+                    id: o.id,
+                    order_id: o.id,
+                    customer_name: o.customerName || '',
+                    customer_email: o.customerEmail || '',
+                    total_amount: Number(o.totalAmount ?? 0),
+                    status: o.status,
+                    created_at: o.createdAt,
+                    delivery_address: o.deliveryAddress,
+                    items: o.items || [],
+                }));
+                setOrders(normalized);
             } else {
                 // Set dummy data for demo
                 setOrders([

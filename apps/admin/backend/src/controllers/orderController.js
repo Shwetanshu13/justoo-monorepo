@@ -12,13 +12,16 @@ export const getAllOrders = async (req, res) => {
             limit = 10,
             status,
             userId,
+            customerId,
             startDate,
             endDate,
             sortBy = 'createdAt',
             sortOrder = 'desc'
         } = req.query;
 
-        const offset = (page - 1) * limit;
+        const pageNum = Number.parseInt(page) || 1;
+        const limitNum = Number.parseInt(limit) || 10;
+        const offset = (pageNum - 1) * limitNum;
 
         // Build query conditions
         const conditions = [];
@@ -27,8 +30,9 @@ export const getAllOrders = async (req, res) => {
             conditions.push(eq(orders.status, status));
         }
 
-        if (userId) {
-            conditions.push(eq(orders.userId, parseInt(userId)));
+        const customerFilter = userId || customerId; // accept either param name
+        if (customerFilter) {
+            conditions.push(eq(orders.customerId, Number.parseInt(customerFilter)));
         }
 
         if (startDate && endDate) {
@@ -39,7 +43,7 @@ export const getAllOrders = async (req, res) => {
         let query = db
             .select({
                 id: orders.id,
-                userId: orders.userId,
+                customerId: orders.customerId,
                 status: orders.status,
                 totalAmount: orders.totalAmount,
                 itemCount: orders.itemCount,
@@ -59,7 +63,7 @@ export const getAllOrders = async (req, res) => {
         query = query.orderBy(sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn));
 
         // Get orders with pagination
-        const ordersList = await query.limit(parseInt(limit)).offset(offset);
+        const ordersList = await query.limit(limitNum).offset(offset);
 
         // Get total count
         let countQuery = db.select({ count: count() }).from(orders);
@@ -71,11 +75,11 @@ export const getAllOrders = async (req, res) => {
         return successResponse(res, 'Orders retrieved successfully', {
             orders: ordersList,
             pagination: {
-                currentPage: parseInt(page),
-                totalPages: Math.ceil(totalOrders[0].count / limit),
+                currentPage: pageNum,
+                totalPages: Math.ceil(totalOrders[0].count / limitNum),
                 totalItems: totalOrders[0].count,
-                hasNext: page * limit < totalOrders[0].count,
-                hasPrev: page > 1
+                hasNext: pageNum * limitNum < totalOrders[0].count,
+                hasPrev: pageNum > 1
             }
         });
     } catch (error) {

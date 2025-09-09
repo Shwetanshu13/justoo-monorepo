@@ -74,12 +74,12 @@ const RecentActivity = ({ activities }) => {
                                         <div>
                                             <span
                                                 className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${activity.type === 'order'
-                                                        ? 'bg-green-500'
-                                                        : activity.type === 'admin'
-                                                            ? 'bg-blue-500'
-                                                            : activity.type === 'rider'
-                                                                ? 'bg-purple-500'
-                                                                : 'bg-gray-500'
+                                                    ? 'bg-green-500'
+                                                    : activity.type === 'admin'
+                                                        ? 'bg-blue-500'
+                                                        : activity.type === 'rider'
+                                                            ? 'bg-purple-500'
+                                                            : 'bg-gray-500'
                                                     }`}
                                             >
                                                 {activity.type === 'order' && <ShoppingBagIcon className="w-4 h-4 text-white" />}
@@ -117,17 +117,18 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const { data } = await adminAPI.getDashboardAnalytics();
+            const resp = await adminAPI.getDashboardAnalytics();
+            const payload = resp?.data?.data || {};
+            // Map expected stats from dashboard payload if available
             setStats({
-                totalOrders: data?.totalOrders ?? 0,
-                totalRevenue: data?.totalRevenue ?? 0,
-                activeRiders: data?.activeRiders ?? 0,
-                inventoryAdmins: data?.inventoryAdmins ?? 0,
+                totalOrders: payload?.orders?.summary?.totalOrders ?? payload?.orders?.totalOrders ?? 0,
+                totalRevenue: payload?.payments?.totalRevenue ?? payload?.orders?.summary?.totalRevenue ?? 0,
+                activeRiders: payload?.users?.activeRiders ?? 0,
+                inventoryAdmins: payload?.users?.inventoryAdmins ?? 0,
             });
 
-            // Optional: load recent activities if you expose an endpoint
             setActivities(
-                data?.recentActivities ?? [
+                payload?.recentActivities ?? [
                     { id: 1, type: 'order', description: 'New order #ORD-001 placed', time: '2 minutes ago' },
                     { id: 2, type: 'admin', description: 'New inventory admin added', time: '1 hour ago' },
                     { id: 3, type: 'rider', description: 'Rider John completed delivery', time: '2 hours ago' },
