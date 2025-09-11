@@ -48,6 +48,9 @@ importers:
         specifier: ^8.18.3
         version: 8.18.3
     devDependencies:
+      dotenv:
+        specifier: ^17.2.1
+        version: 17.2.2
       drizzle-kit:
         specifier: ^0.31.4
         version: 0.31.4
@@ -192,6 +195,13 @@ importers:
       drizzle-orm:
         specifier: ^0.44.4
         version: 0.44.5(@neondatabase/serverless@1.0.1)(@types/pg@8.15.5)(pg@8.16.3)
+    devDependencies:
+      dotenv:
+        specifier: ^17.2.1
+        version: 17.2.2
+      drizzle-kit:
+        specifier: ^0.31.4
+        version: 0.31.4
 
 packages:
 
