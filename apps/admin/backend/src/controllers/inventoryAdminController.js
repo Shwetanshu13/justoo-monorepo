@@ -182,10 +182,12 @@ class InventoryAdminController {
                 if (duplicateConditions.length > 0) {
                     const duplicateCheck = await db.select()
                         .from(inventoryUsers)
-                        .where(and(...duplicateConditions));
+                        .where(and(
+                            ...duplicateConditions,
+                            sql`${inventoryUsers.id} != ${parseInt(id)}`
+                        ));
 
-                    const hasDuplicate = duplicateCheck.some(user => user.id !== parseInt(id));
-                    if (hasDuplicate) {
+                    if (duplicateCheck.length > 0) {
                         return res.status(400).json({
                             success: false,
                             message: 'Username or email already exists'
