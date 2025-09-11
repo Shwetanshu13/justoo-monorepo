@@ -143,7 +143,7 @@ export const getAllAdmins = async (req, res) => {
             .from(admins)
             .where(sql`${admins.role} IN ('superadmin', 'admin', 'inventory_admin')`);
 
-        return successResponse(res, 'Admins retrieved successfully', adminsList);
+        return successResponse(res, adminsList, 'Admins retrieved successfully');
     } catch (error) {
         console.error('Error getting all admins:', error);
         return errorResponse(res, 'Failed to retrieve admins', 500);

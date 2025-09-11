@@ -234,9 +234,10 @@ export default function AdminsPage() {
         try {
             setLoading(true);
             const response = await api.get('/admin');
+            console.log(response);
+            if (response.data.success) {
 
-            if (response.success) {
-                setAdmins(response.data);
+                setAdmins(response.data.data);
             } else {
                 toast.error('Failed to fetch admins');
             }
