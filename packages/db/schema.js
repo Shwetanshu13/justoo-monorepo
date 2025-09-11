@@ -114,6 +114,7 @@ export const justooRiders = pgTable('justoo_riders', {
 // Aliases for backward compatibility
 export const justoo_admins = justooAdmins;
 export const justoo_riders = justooRiders;
+export const justoo_payments = justooPayments;
 export const order_items = orderItems;
 export const inventory_users = inventoryUsers;
 export const users = inventoryUsers;

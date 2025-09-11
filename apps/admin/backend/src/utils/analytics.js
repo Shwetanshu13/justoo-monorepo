@@ -1,6 +1,6 @@
 // Analytics utility functions
 import db from '../config/dbConfig.js';
-import { orders, order_items, items, justoo_admins as admins } from '@justoo/db';
+import { orders, order_items, items, justoo_admins as admins, justoo_payments as payments } from '@justoo/db';
 import { eq, and, between, count, sum, avg, desc, asc, sql } from 'drizzle-orm';
 
 export const getOrderAnalytics = async (period = 'daily', startDate, endDate) => {
@@ -111,7 +111,7 @@ export const getInventoryAnalytics = async () => {
                 itemId: order_items.itemId,
                 itemName: items.name,
                 totalSold: sum(order_items.quantity),
-                totalRevenue: sum(sql`${order_items.quantity} * ${order_items.price}`)
+                totalRevenue: sum(sql`${order_items.quantity} * ${order_items.unitPrice}`)
             })
             .from(order_items)
             .innerJoin(items, eq(order_items.itemId, items.id))
@@ -153,9 +153,7 @@ export const getUserAnalytics = async () => {
         // Active customers (those who have placed orders)
         const activeCustomersResult = await db
             .select({ count: sql`COUNT(DISTINCT ${orders.userId})` })
-            .from(orders)
-            .innerJoin(users, eq(orders.userId, admins.id))
-            .where(eq(admins.role, 'customer'));
+            .from(orders);
 
         return {
             usersByRole: usersByRoleResult.reduce((acc, curr) => {
@@ -176,13 +174,13 @@ export const getPaymentAnalytics = async () => {
         // Payment method breakdown
         const paymentMethodsResult = await db
             .select({
-                method: orders.paymentMethod,
+                method: payments.method,
                 count: count(),
-                total: sum(orders.totalAmount)
+                total: sum(payments.amount)
             })
-            .from(orders)
-            .where(eq(orders.status, 'delivered'))
-            .groupBy(orders.paymentMethod);
+            .from(payments)
+            .where(eq(payments.status, 'completed'))
+            .groupBy(payments.method);
 
         // Order status breakdown
         const orderStatusResult = await db

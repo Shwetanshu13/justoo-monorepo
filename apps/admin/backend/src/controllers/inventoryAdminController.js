@@ -170,21 +170,27 @@ class InventoryAdminController {
 
             // Check for duplicate username/email if being updated
             if (username || email) {
-                const duplicateCheck = await db.select()
-                    .from(inventoryUsers)
-                    .where(
-                        and(
-                            username ? eq(inventoryUsers.username, username) : undefined,
-                            email ? eq(inventoryUsers.email, email) : undefined
-                        )
-                    );
+                let duplicateConditions = [];
 
-                const hasDuplicate = duplicateCheck.some(user => user.id !== parseInt(id));
-                if (hasDuplicate) {
-                    return res.status(400).json({
-                        success: false,
-                        message: 'Username or email already exists'
-                    });
+                if (username) {
+                    duplicateConditions.push(eq(inventoryUsers.username, username));
+                }
+                if (email) {
+                    duplicateConditions.push(eq(inventoryUsers.email, email));
+                }
+
+                if (duplicateConditions.length > 0) {
+                    const duplicateCheck = await db.select()
+                        .from(inventoryUsers)
+                        .where(and(...duplicateConditions));
+
+                    const hasDuplicate = duplicateCheck.some(user => user.id !== parseInt(id));
+                    if (hasDuplicate) {
+                        return res.status(400).json({
+                            success: false,
+                            message: 'Username or email already exists'
+                        });
+                    }
                 }
             }
 

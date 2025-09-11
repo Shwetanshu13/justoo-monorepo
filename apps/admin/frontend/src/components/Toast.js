@@ -1,10 +1,22 @@
 'use client';
+import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 export default function Toast({ type = 'success', message, onClose }) {
-    if (!message) return null;
-    if (type === 'error') toast.error(message);
-    else toast.success(message);
-    if (onClose) setTimeout(onClose, 10);
+    useEffect(() => {
+        if (!message) return;
+
+        if (type === 'error') {
+            toast.error(message);
+        } else {
+            toast.success(message);
+        }
+
+        if (onClose) {
+            const timer = setTimeout(onClose, 3000); // Auto-close after 3 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [type, message, onClose]);
+
     return null;
 }
