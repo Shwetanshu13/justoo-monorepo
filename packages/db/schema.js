@@ -1,10 +1,10 @@
 import { pgTable, serial, varchar, integer, numeric, text, timestamp, pgEnum } from 'drizzle-orm/pg-core';
 
 // Enums
-export const adminRole = pgEnum('admin_role', ['superadmin', 'viewer']);
+export const adminRole = pgEnum('admin_role', ['superadmin', 'admin', 'inventory_admin', 'viewer']);
 export const inventoryUserRole = pgEnum('inventory_user_role', ['admin', 'user']);
 export const orderStatus = pgEnum('order_status', ['placed', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled']);
-export const paymentMethod = pgEnum('payment_method', ['cash', 'upi', 'card', 'wallet']);
+export const paymentMethod = pgEnum('payment_method', ['cash', 'upi', 'card', 'wallet', 'online']);
 export const paymentStatus = pgEnum('payment_status', ['pending', 'completed', 'failed', 'refunded']);
 export const riderStatus = pgEnum('rider_status', ['active', 'inactive', 'busy', 'suspended']);
 
@@ -94,9 +94,11 @@ export const justooPayments = pgTable('justoo_payments', {
 
 export const justooRiders = pgTable('justoo_riders', {
     id: serial('id').primaryKey(),
+    username: varchar('username', { length: 100 }).notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }),
     phone: varchar('phone', { length: 20 }).notNull(),
+    password: varchar('password', { length: 255 }),
     vehicleType: varchar('vehicle_type', { length: 50 }).notNull(),
     vehicleNumber: varchar('vehicle_number', { length: 50 }).notNull(),
     licenseNumber: varchar('license_number', { length: 100 }),
@@ -104,6 +106,7 @@ export const justooRiders = pgTable('justoo_riders', {
     totalDeliveries: integer('total_deliveries').default(0).notNull(),
     rating: integer('rating').default(5),
     isActive: integer('is_active').default(1).notNull(),
+    lastLogin: timestamp('last_login'),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
 });
