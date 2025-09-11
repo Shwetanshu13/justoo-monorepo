@@ -8,6 +8,27 @@
       "when": 1757575601546,
       "tag": "0000_acoustic_moondragon",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1757576371809,
+      "tag": "0001_optimal_moondragon",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1757577036459,
+      "tag": "0002_puzzling_monster_badoon",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1757577342041,
+      "tag": "0003_low_giant_girl",
+      "breakpoints": true
     }
   ]
 }
