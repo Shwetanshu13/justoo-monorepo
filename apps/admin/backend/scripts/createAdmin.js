@@ -1,5 +1,5 @@
-import './src/config/env.js'; // Load environment variables first
-import db from './src/config/dbConfig.js';
+import '../src/config/env.js'; // Load environment variables first
+import db from '../src/config/dbConfig.js';
 import { admins } from './src/models/admin.js';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';

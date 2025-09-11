@@ -3,7 +3,7 @@ import { pgTable, serial, varchar, integer, numeric, text, timestamp, pgEnum } f
 // Enums
 export const adminRole = pgEnum('admin_role', ['superadmin', 'viewer']);
 export const inventoryUserRole = pgEnum('inventory_user_role', ['admin', 'user']);
-export const orderStatus = pgEnum('order_status', ['placed', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled']);
+export const orderStatus = pgEnum('order_status', ['placed', 'out_for_delivery', 'delivered', 'cancelled']);
 export const paymentMethod = pgEnum('payment_method', ['cash', 'upi', 'card', 'wallet']);
 export const paymentStatus = pgEnum('payment_status', ['pending', 'completed', 'failed', 'refunded']);
 export const riderStatus = pgEnum('rider_status', ['active', 'inactive', 'busy', 'suspended']);

@@ -24,7 +24,7 @@
         "src/**/*",
         "*.js",
         "*.ts"
-    ],
+, "scripts/createAdmin.js"    ],
     "exclude": [
         "node_modules",
         "dist",

@@ -1,4 +1,4 @@
-import { db } from './db/index.js';
+import { db } from '../db/index.js';
 import { inventoryUsers as usersTable } from '@justoo/db';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';

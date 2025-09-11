@@ -24,6 +24,7 @@
   "license": "ISC",
   "packageManager": "pnpm@9.6.0",
   "dependencies": {
+    "@justoo/db": "workspace:*",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "drizzle-kit": "^0.31.4",
