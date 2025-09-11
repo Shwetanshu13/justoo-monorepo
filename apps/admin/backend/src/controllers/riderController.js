@@ -1,7 +1,7 @@
 // Rider Controller
 import db from '../config/dbConfig.js';
 import { justoo_riders as riders, orders, orderItems } from '@justoo/db';
-import { eq, and, count, sum, avg, desc, asc, sql, between } from 'drizzle-orm';
+import { eq, and, count, sum, avg, desc, asc, sql, between, or } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { errorResponse, successResponse } from '../utils/response.js';
 
@@ -238,13 +238,16 @@ export const updateRider = async (req, res) => {
                 .where(
                     and(
                         sql`${riders.id} != ${parseInt(id)}`,
-                        sql`${riders.username} = ${username || existingRider[0].username} OR ${riders.email} = ${email || existingRider[0].email}`
+                        or(
+                            username ? eq(riders.username, username) : undefined,
+                            email ? eq(riders.email, email) : undefined
+                        ).filter(Boolean)
                     )
                 )
                 .limit(1);
 
             if (duplicateCheck.length > 0) {
-                const field = duplicateCheck[0].username === username ? 'Username' : 'Email';
+                const field = (username && duplicateCheck[0].username === username) ? 'Username' : 'Email';
                 return errorResponse(res, `${field} already exists`, 409);
             }
         }
