@@ -209,7 +209,7 @@ export const getUserAnalytics = async (startDate, endDate) => {
 
         // Active customers (those who have placed orders)
         const activeCustomersResult = await db
-            .select({ count: sql`COUNT(DISTINCT ${orders.userId})` })
+            .select({ count: sql`COUNT(DISTINCT ${orders.customerId})` })
             .from(orders)
             .where(startDate && endDate ? sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate}` : undefined);
 

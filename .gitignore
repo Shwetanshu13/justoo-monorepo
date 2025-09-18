@@ -8,3 +8,4 @@ build
 *.log
 pnpm-debug.log*
 .next
+drizzle

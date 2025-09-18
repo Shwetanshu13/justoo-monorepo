@@ -32,7 +32,7 @@ export const getAllOrders = async (req, res) => {
 
         const customerFilter = userId || customerId; // accept either param name
         if (customerFilter) {
-            conditions.push(eq(orders.userId, Number.parseInt(customerFilter)));
+            conditions.push(eq(orders.customerId, Number.parseInt(customerFilter)));
         }
 
         if (startDate && endDate) {
@@ -43,7 +43,7 @@ export const getAllOrders = async (req, res) => {
         let query = db
             .select({
                 id: orders.id,
-                userId: orders.userId,
+                customerId: orders.customerId,
                 status: orders.status,
                 totalAmount: orders.totalAmount,
                 itemCount: orders.itemCount,
