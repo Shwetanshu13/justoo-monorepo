@@ -178,22 +178,6 @@ export const deliveryZones = pgTable('delivery_zones', {
     updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const customerPreferences = pgTable('customer_preferences', {
-    id: serial('id').primaryKey(),
-    customerId: integer('customer_id').notNull(),
-    preferredLanguage: varchar('preferred_language', { length: 10 }).default('en'),
-    notificationPreferences: varchar('notification_preferences', { length: 500 }), // JSON string for notification settings
-    dietaryRestrictions: varchar('dietary_restrictions', { length: 500 }), // JSON string for dietary preferences
-    favoriteItems: varchar('favorite_items', { length: 1000 }), // JSON string for favorite item IDs
-    allergens: varchar('allergens', { length: 500 }), // JSON string for allergens
-    specialInstructions: text('special_instructions'),
-    contactlessDelivery: integer('contactless_delivery').default(0).notNull(),
-    leaveAtDoor: integer('leave_at_door').default(0).notNull(),
-    ringBell: integer('ring_bell').default(1).notNull(),
-    createdAt: timestamp('created_at').defaultNow(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-});
-
 export const customerNotifications = pgTable('customer_notifications', {
     id: serial('id').primaryKey(),
     customerId: integer('customer_id').notNull(),
@@ -218,5 +202,4 @@ export const users = inventoryUsers;
 // New table aliases
 export const customer_addresses = customerAddresses;
 export const delivery_zones = deliveryZones;
-export const customer_preferences = customerPreferences;
 export const customer_notifications = customerNotifications;
