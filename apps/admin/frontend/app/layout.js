@@ -1,5 +1,6 @@
 import './globals.css';
 import Providers from './providers';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata = {
     title: 'Admin Dashboard - Justoo',
@@ -11,6 +12,7 @@ export default function RootLayout({ children }) {
         <html lang="en">
             <body className="bg-gray-50 text-gray-900">
                 <Providers>{children}</Providers>
+                <Toaster position="top-right" />
             </body>
         </html>
     );

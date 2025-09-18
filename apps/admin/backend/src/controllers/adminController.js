@@ -227,7 +227,7 @@ export const orderAnalytics = async (req, res) => {
 
         const analytics = await getOrderAnalytics(period, startDate, endDate);
 
-        return successResponse(res, 'Order analytics retrieved successfully', analytics);
+        return successResponse(res, analytics, 'Order analytics retrieved successfully');
     } catch (error) {
         console.error('Error getting order analytics:', error);
         return errorResponse(res, 'Failed to retrieve order analytics', 500);
@@ -269,8 +269,27 @@ export const paymentAnalytics = async (req, res) => {
 
 export const getDashboard = async (req, res) => {
     try {
+        const { days, startDate, endDate } = req.query;
+
+        // Calculate date range if days is provided
+        let dateRange = {};
+        if (days) {
+            const daysNum = parseInt(days);
+            const endDateObj = new Date();
+            const startDateObj = new Date();
+            startDateObj.setDate(endDateObj.getDate() - daysNum);
+
+            // Pass Date objects instead of strings for Drizzle compatibility
+            dateRange.startDate = startDateObj;
+            dateRange.endDate = endDateObj;
+        } else if (startDate && endDate) {
+            // Parse string dates to Date objects
+            dateRange.startDate = new Date(startDate);
+            dateRange.endDate = new Date(endDate);
+        }
+
         const [orderStats, inventoryStats, userStats, paymentStats] = await Promise.all([
-            getOrderAnalytics('daily'),
+            getOrderAnalytics('daily', dateRange.startDate, dateRange.endDate),
             getInventoryAnalytics(),
             getUserAnalytics(),
             getPaymentAnalytics()
@@ -281,10 +300,14 @@ export const getDashboard = async (req, res) => {
             inventory: inventoryStats,
             users: userStats,
             payments: paymentStats,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            dateRange: {
+                startDate: dateRange.startDate?.toISOString().split('T')[0],
+                endDate: dateRange.endDate?.toISOString().split('T')[0]
+            }
         };
 
-        return successResponse(res, 'Dashboard data retrieved successfully', dashboard);
+        return successResponse(res, dashboard, 'Dashboard data retrieved successfully');
     } catch (error) {
         console.error('Error getting dashboard data:', error);
         return errorResponse(res, 'Failed to retrieve dashboard data', 500);

@@ -222,7 +222,7 @@ export default function OrdersPage() {
             const ok = response?.data?.success;
             const payload = response?.data?.message?.orders;
             // console.log(payload);
-            if (ok && payload?.orders) {
+            if (ok && payload) {
                 const normalized = payload.map((o) => ({
                     id: o.id,
                     order_id: o.id,

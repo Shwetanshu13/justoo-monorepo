@@ -163,10 +163,6 @@ export default function OrdersPage() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <button
-                                                        onClick={() => {
-                                                            // You can implement order details modal here
-                                                            toast.info('Order details feature coming soon');
-                                                        }}
                                                         className="text-blue-600 hover:text-blue-900"
                                                         title="View Details"
                                                     >
