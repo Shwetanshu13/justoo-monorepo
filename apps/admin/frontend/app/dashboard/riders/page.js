@@ -36,6 +36,7 @@ const StatusBadge = ({ status }) => {
 
 const RiderCard = ({ rider, onEdit, onDelete, onToggleStatus }) => {
     const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -55,13 +56,13 @@ const RiderCard = ({ rider, onEdit, onDelete, onToggleStatus }) => {
                     <div className="ml-4 flex-1">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-medium text-gray-900">{rider.name}</h3>
-                                <p className="text-sm text-gray-500">{rider.phone}</p>
+                                <h3 className="text-lg font-medium text-gray-900">{rider.name || 'Unnamed Rider'}</h3>
+                                <p className="text-sm text-gray-500">{rider.phone || 'No phone'}</p>
                             </div>
                             <StatusBadge status={rider.status} />
                         </div>
                         <div className="mt-2 text-sm text-gray-500">
-                            <p>Vehicle: {rider.vehicle_type} - {rider.vehicle_number}</p>
+                            <p>Vehicle: {rider.vehicle_type || 'N/A'} - {rider.vehicle_number || 'N/A'}</p>
                             <p>Joined: {formatDate(rider.created_at)}</p>
                         </div>
                     </div>
@@ -315,53 +316,16 @@ export default function RidersPage() {
         try {
             setLoading(true);
             const response = await api.get('/riders');
+            console.log(response);
 
-            if (response.success) {
-                setRiders(response.data);
-            } else {
-                // Set dummy data for demo
-                setRiders([
-                    {
-                        id: 1,
-                        name: 'Rajesh Kumar',
-                        phone: '+91 9876543210',
-                        email: 'rajesh@example.com',
-                        vehicle_type: 'bike',
-                        vehicle_number: 'KA01AB1234',
-                        license_number: 'KA0220200012345',
-                        status: 'active',
-                        total_deliveries: 45,
-                        created_at: '2024-01-10T00:00:00Z'
-                    },
-                    {
-                        id: 2,
-                        name: 'Suresh Sharma',
-                        phone: '+91 9876543211',
-                        email: 'suresh@example.com',
-                        vehicle_type: 'scooter',
-                        vehicle_number: 'KA02CD5678',
-                        license_number: 'KA0220200023456',
-                        status: 'busy',
-                        total_deliveries: 32,
-                        created_at: '2024-01-08T00:00:00Z'
-                    },
-                    {
-                        id: 3,
-                        name: 'Amit Singh',
-                        phone: '+91 9876543212',
-                        email: 'amit@example.com',
-                        vehicle_type: 'bike',
-                        vehicle_number: 'KA03EF9012',
-                        license_number: 'KA0220200034567',
-                        status: 'inactive',
-                        total_deliveries: 18,
-                        created_at: '2024-01-05T00:00:00Z'
-                    }
-                ]);
-            }
+            // Ensure we have valid rider data
+            const riderData = response.data?.data?.riders || [];
+            setRiders(Array.isArray(riderData) ? riderData : []);
+
         } catch (error) {
             console.error('Error fetching riders:', error);
             toast.error('Failed to fetch riders');
+            setRiders([]); // Set empty array on error
         } finally {
             setLoading(false);
         }
@@ -378,7 +342,7 @@ export default function RidersPage() {
     };
 
     const handleDeleteRider = async (rider) => {
-        if (window.confirm(`Are you sure you want to delete rider ${rider.name}?`)) {
+        if (window.confirm(`Are you sure you want to delete rider ${rider.name || 'this rider'}?`)) {
             try {
                 const response = await api.delete(`/riders/${rider.id}`);
 
@@ -440,9 +404,13 @@ export default function RidersPage() {
     };
 
     const filteredRiders = riders.filter(rider => {
-        const matchesSearch = rider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            rider.phone.includes(searchTerm) ||
-            rider.vehicle_number.toLowerCase().includes(searchTerm.toLowerCase());
+        const riderName = rider.name || '';
+        const riderPhone = rider.phone || '';
+        const riderVehicleNumber = rider.vehicle_number || '';
+
+        const matchesSearch = riderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            riderPhone.includes(searchTerm) ||
+            riderVehicleNumber.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = selectedStatus === 'all' || rider.status === selectedStatus;
         return matchesSearch && matchesStatus;
     });

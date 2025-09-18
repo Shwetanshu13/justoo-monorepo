@@ -8,50 +8,86 @@ import { errorResponse, successResponse } from '../utils/response.js';
 // Add new rider
 export const addRider = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const {
+            name,
+            phone,
+            email,
+            vehicle_type,
+            vehicle_number,
+            license_number,
+            status = 'active'
+        } = req.body;
 
         // Validation
-        if (!username || !email || !password) {
-            return errorResponse(res, 'Username, email, and password are required', 400);
+        if (!name || !phone || !vehicle_type || !vehicle_number) {
+            return errorResponse(res, 'Name, phone, vehicle type, and vehicle number are required', 400);
         }
 
-        if (username.length < 3) {
-            return errorResponse(res, 'Username must be at least 3 characters long', 400);
+        // Phone validation
+        const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
+        if (!phoneRegex.test(phone)) {
+            return errorResponse(res, 'Please provide a valid phone number', 400);
         }
 
-        if (password.length < 6) {
-            return errorResponse(res, 'Password must be at least 6 characters long', 400);
+        // Email validation (if provided)
+        if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return errorResponse(res, 'Please provide a valid email address', 400);
+            }
         }
 
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return errorResponse(res, 'Please provide a valid email address', 400);
+        // Vehicle type validation
+        const validVehicleTypes = ['bike', 'scooter', 'car', 'van'];
+        if (!validVehicleTypes.includes(vehicle_type)) {
+            return errorResponse(res, 'Invalid vehicle type. Must be one of: bike, scooter, car, van', 400);
         }
 
-        // Check if username or email already exists
-        const existingUser = await db
+        // Status validation
+        const validStatuses = ['active', 'inactive', 'busy'];
+        if (!validStatuses.includes(status)) {
+            return errorResponse(res, 'Invalid status. Must be one of: active, inactive, busy', 400);
+        }
+
+        // Check if phone number already exists
+        const existingPhone = await db
             .select()
             .from(riders)
-            .where(sql`${riders.username} = ${username} OR ${riders.email} = ${email}`)
+            .where(eq(riders.phone, phone))
             .limit(1);
 
-        if (existingUser.length > 0) {
-            const field = existingUser[0].username === username ? 'Username' : 'Email';
-            return errorResponse(res, `${field} already exists`, 409);
+        if (existingPhone.length > 0) {
+            return errorResponse(res, 'Phone number already exists', 409);
         }
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 12);
+        // Check if email already exists (if provided)
+        if (email) {
+            const existingEmail = await db
+                .select()
+                .from(riders)
+                .where(eq(riders.email, email))
+                .limit(1);
+
+            if (existingEmail.length > 0) {
+                return errorResponse(res, 'Email already exists', 409);
+            }
+        }
+
+        // Generate username from name (lowercase, replace spaces with underscores)
+        const username = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') + '_' + Date.now().toString().slice(-4);
 
         // Create rider
         const newRider = await db
             .insert(riders)
             .values({
                 username,
-                email,
-                password: hashedPassword,
-                status: 'active',
+                name,
+                phone,
+                email: email || null,
+                vehicleType: vehicle_type,
+                vehicleNumber: vehicle_number,
+                licenseNumber: license_number || null,
+                status,
                 isActive: 1
             })
             .returning();
@@ -121,12 +157,19 @@ export const getAllRiders = async (req, res) => {
             .select({
                 id: riders.id,
                 username: riders.username,
+                name: riders.name,
+                phone: riders.phone,
                 email: riders.email,
+                vehicle_type: riders.vehicleType,
+                vehicle_number: riders.vehicleNumber,
+                license_number: riders.licenseNumber,
                 status: riders.status,
+                total_deliveries: riders.totalDeliveries,
+                rating: riders.rating,
                 isActive: riders.isActive,
                 lastLogin: riders.lastLogin,
-                createdAt: riders.createdAt,
-                updatedAt: riders.updatedAt
+                created_at: riders.createdAt,
+                updated_at: riders.updatedAt
             })
             .from(riders);
 
@@ -138,7 +181,7 @@ export const getAllRiders = async (req, res) => {
         }
 
         if (search) {
-            conditions.push(sql`${riders.username} ILIKE ${'%' + search + '%'} OR ${riders.email} ILIKE ${'%' + search + '%'}`);
+            conditions.push(sql`${riders.username} ILIKE ${'%' + search + '%'} OR ${riders.email} ILIKE ${'%' + search + '%'} OR ${riders.name} ILIKE ${'%' + search + '%'} OR ${riders.phone} ILIKE ${'%' + search + '%'}`);
         }
 
         if (conditions.length > 0) {
@@ -159,7 +202,7 @@ export const getAllRiders = async (req, res) => {
         }
         const totalRiders = await countQuery;
 
-        return successResponse(res, 'Riders retrieved successfully', {
+        return successResponse(res, {
             riders: ridersList,
             pagination: {
                 currentPage: parseInt(page),
@@ -168,7 +211,7 @@ export const getAllRiders = async (req, res) => {
                 hasNext: page * limit < totalRiders[0].count,
                 hasPrev: page > 1
             }
-        });
+        }, 'Riders retrieved successfully');
     } catch (error) {
         console.error('Error getting riders:', error);
         return errorResponse(res, 'Failed to retrieve riders', 500);
@@ -188,11 +231,19 @@ export const getRiderById = async (req, res) => {
             .select({
                 id: riders.id,
                 username: riders.username,
+                name: riders.name,
+                phone: riders.phone,
                 email: riders.email,
+                vehicle_type: riders.vehicleType,
+                vehicle_number: riders.vehicleNumber,
+                license_number: riders.licenseNumber,
+                status: riders.status,
+                total_deliveries: riders.totalDeliveries,
+                rating: riders.rating,
                 isActive: riders.isActive,
                 lastLogin: riders.lastLogin,
-                createdAt: riders.createdAt,
-                updatedAt: riders.updatedAt
+                created_at: riders.createdAt,
+                updated_at: riders.updatedAt
             })
             .from(riders)
             .where(eq(riders.id, parseInt(id)))
@@ -213,7 +264,16 @@ export const getRiderById = async (req, res) => {
 export const updateRider = async (req, res) => {
     try {
         const { id } = req.params;
-        const { username, email, isActive } = req.body;
+        const {
+            name,
+            phone,
+            email,
+            vehicle_type,
+            vehicle_number,
+            license_number,
+            status,
+            isActive
+        } = req.body;
 
         if (!id) {
             return errorResponse(res, 'Rider ID is required', 400);
@@ -230,8 +290,37 @@ export const updateRider = async (req, res) => {
             return errorResponse(res, 'Rider not found', 404);
         }
 
-        // Check for duplicate username/email if being updated
-        if (username || email) {
+        // Validation
+        if (phone) {
+            const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
+            if (!phoneRegex.test(phone)) {
+                return errorResponse(res, 'Please provide a valid phone number', 400);
+            }
+        }
+
+        if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return errorResponse(res, 'Please provide a valid email address', 400);
+            }
+        }
+
+        if (vehicle_type) {
+            const validVehicleTypes = ['bike', 'scooter', 'car', 'van'];
+            if (!validVehicleTypes.includes(vehicle_type)) {
+                return errorResponse(res, 'Invalid vehicle type. Must be one of: bike, scooter, car, van', 400);
+            }
+        }
+
+        if (status) {
+            const validStatuses = ['active', 'inactive', 'busy'];
+            if (!validStatuses.includes(status)) {
+                return errorResponse(res, 'Invalid status. Must be one of: active, inactive, busy', 400);
+            }
+        }
+
+        // Check for duplicate phone/email if being updated
+        if (phone || email) {
             const duplicateCheck = await db
                 .select()
                 .from(riders)
@@ -239,7 +328,7 @@ export const updateRider = async (req, res) => {
                     and(
                         sql`${riders.id} != ${parseInt(id)}`,
                         or(
-                            username ? eq(riders.username, username) : undefined,
+                            phone ? eq(riders.phone, phone) : undefined,
                             email ? eq(riders.email, email) : undefined
                         ).filter(Boolean)
                     )
@@ -247,7 +336,7 @@ export const updateRider = async (req, res) => {
                 .limit(1);
 
             if (duplicateCheck.length > 0) {
-                const field = (username && duplicateCheck[0].username === username) ? 'Username' : 'Email';
+                const field = (phone && duplicateCheck[0].phone === phone) ? 'Phone' : 'Email';
                 return errorResponse(res, `${field} already exists`, 409);
             }
         }
@@ -257,8 +346,13 @@ export const updateRider = async (req, res) => {
             updatedAt: new Date().toISOString()
         };
 
-        if (username) updateData.username = username;
-        if (email) updateData.email = email;
+        if (name !== undefined) updateData.name = name;
+        if (phone !== undefined) updateData.phone = phone;
+        if (email !== undefined) updateData.email = email;
+        if (vehicle_type !== undefined) updateData.vehicleType = vehicle_type;
+        if (vehicle_number !== undefined) updateData.vehicleNumber = vehicle_number;
+        if (license_number !== undefined) updateData.licenseNumber = license_number;
+        if (status !== undefined) updateData.status = status;
         if (isActive !== undefined) updateData.isActive = parseInt(isActive);
 
         const updatedRider = await db
