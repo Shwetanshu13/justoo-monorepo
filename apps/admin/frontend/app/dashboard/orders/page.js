@@ -218,10 +218,12 @@ export default function OrdersPage() {
         try {
             setLoading(true);
             const response = await api.get('/orders');
+            console.log(response);
             const ok = response?.data?.success;
-            const payload = response?.data?.data;
-            if (ok && payload?.orders) {
-                const normalized = payload.orders.map((o) => ({
+            const payload = response?.data?.message?.orders;
+            // console.log(payload);
+            if (ok && payload) {
+                const normalized = payload.map((o) => ({
                     id: o.id,
                     order_id: o.id,
                     customer_name: o.customerName || '',
@@ -232,6 +234,7 @@ export default function OrdersPage() {
                     delivery_address: o.deliveryAddress,
                     items: o.items || [],
                 }));
+                console.log(normalized);
                 setOrders(normalized);
             } else {
                 setOrders([
@@ -296,7 +299,7 @@ export default function OrdersPage() {
     const getFilteredOrders = () => {
         return orders.filter(order => {
             const matchesSearch =
-                order.order_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                String(order.order_id)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 order.customer_email?.toLowerCase().includes(searchTerm.toLowerCase());
 

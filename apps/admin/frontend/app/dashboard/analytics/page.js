@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/utils/api';
+import toast from 'react-hot-toast';
 import {
     ChartBarIcon,
     CurrencyRupeeIcon,
@@ -178,90 +179,92 @@ export default function AnalyticsPage() {
         try {
             setLoading(true);
 
-            // In a real app, this would fetch from the API
-            // const response = await api.get(`/analytics/overview?days=${dateRange}`);
+            // Fetch real analytics data from backend
+            const response = await api.get(`/admin/analytics/dashboard?days=${dateRange}`);
+            const data = response.data.data;
+            console.log(response);
 
-            // For now, set dummy data
+            // Transform the data to match frontend expectations
+            const totalRevenue = parseFloat(data.orders?.revenue?.total || 0);
+            const totalOrders = data.orders?.totalOrders || 0;
+            const averageOrderValue = parseFloat(data.orders?.revenue?.average || 0);
+            const activeRiders = data.users?.activeCustomers || 0;
+            const totalCustomers = data.users?.recentRegistrations || 0;
+
+            // Calculate conversion rate (simplified calculation)
+            const conversionRate = totalOrders > 0 && totalCustomers > 0
+                ? ((totalOrders / totalCustomers) * 100)
+                : 0;
+
             setAnalytics({
-                totalRevenue: 125430,
-                totalOrders: 342,
-                averageOrderValue: 366.75,
-                activeRiders: 12,
-                totalCustomers: 186,
-                conversionRate: 3.2,
+                totalRevenue,
+                totalOrders,
+                averageOrderValue,
+                activeRiders,
+                totalCustomers,
+                conversionRate: parseFloat(conversionRate.toFixed(2)),
             });
 
-            setTopProducts([
-                {
-                    id: 1,
-                    name: 'Premium Organic Coffee',
-                    category: 'Beverages',
-                    sales: 45,
-                    revenue: 13455
-                },
-                {
-                    id: 2,
-                    name: 'Fresh Milk (1L)',
-                    category: 'Dairy',
-                    sales: 38,
-                    revenue: 2470
-                },
-                {
-                    id: 3,
-                    name: 'Basmati Rice (5kg)',
-                    category: 'Grains',
-                    sales: 25,
-                    revenue: 21250
-                },
-                {
-                    id: 4,
-                    name: 'Olive Oil (500ml)',
-                    category: 'Oils',
-                    sales: 22,
-                    revenue: 7040
-                },
-                {
-                    id: 5,
-                    name: 'Fresh Apples (1kg)',
-                    category: 'Fruits',
-                    sales: 18,
-                    revenue: 3240
-                }
-            ]);
+            // Transform top products data
+            const topProducts = data.inventory?.topSellingItems?.map((item, index) => ({
+                id: item.itemId,
+                name: item.itemName || 'Unknown Product',
+                category: 'General', // Category not available in current data
+                sales: parseInt(item.totalSold || 0),
+                revenue: parseFloat(item.totalRevenue || 0)
+            })) || [];
 
-            setRecentOrders([
-                {
-                    id: 1,
-                    order_id: 'ORD-001',
-                    customer_name: 'John Doe',
-                    total_amount: 450,
-                    status: 'delivered'
-                },
-                {
-                    id: 2,
-                    order_id: 'ORD-002',
-                    customer_name: 'Jane Smith',
-                    total_amount: 320,
-                    status: 'out_for_delivery'
-                },
-                {
-                    id: 3,
-                    order_id: 'ORD-003',
-                    customer_name: 'Bob Johnson',
-                    total_amount: 180,
-                    status: 'preparing'
-                },
-                {
-                    id: 4,
-                    order_id: 'ORD-004',
-                    customer_name: 'Alice Brown',
-                    total_amount: 275,
-                    status: 'delivered'
-                }
-            ]);
+            // If no top products, show a message
+            if (topProducts.length === 0) {
+                setTopProducts([{
+                    id: 0,
+                    name: 'No products sold yet',
+                    category: 'N/A',
+                    sales: 0,
+                    revenue: 0
+                }]);
+            } else {
+                setTopProducts(topProducts);
+            }
+
+            // Transform recent orders data - use daily trend data
+            const recentOrders = data.orders?.dailyTrend?.slice(-5).map((trend, index) => ({
+                id: index + 1,
+                order_id: `ORD-${String(trend.date || new Date().toISOString().slice(0, 10)).slice(-4)}-${String(index + 1).padStart(3, '0')}`,
+                customer_name: 'Customer', // Customer name not available in current data
+                total_amount: parseFloat(trend.revenue || 0),
+                status: 'delivered'
+            })) || [];
+
+            // If no recent orders, show a message
+            if (recentOrders.length === 0) {
+                setRecentOrders([{
+                    id: 0,
+                    order_id: 'No orders yet',
+                    customer_name: 'N/A',
+                    total_amount: 0,
+                    status: 'pending'
+                }]);
+            } else {
+                setRecentOrders(recentOrders);
+            }
 
         } catch (error) {
             console.error('Error fetching analytics:', error);
+            const errorMessage = error.response?.data?.message || 'Failed to fetch analytics data';
+            toast.error(errorMessage);
+
+            // Set fallback data in case of error
+            setAnalytics({
+                totalRevenue: 0,
+                totalOrders: 0,
+                averageOrderValue: 0,
+                activeRiders: 0,
+                totalCustomers: 0,
+                conversionRate: 0,
+            });
+            setTopProducts([]);
+            setRecentOrders([]);
         } finally {
             setLoading(false);
         }

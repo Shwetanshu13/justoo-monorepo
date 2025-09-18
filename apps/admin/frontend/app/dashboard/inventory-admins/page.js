@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
 import Modal from '@/components/Modal';
-import Toast from '@/components/Toast';
+import toast from 'react-hot-toast';
 import { inventoryAdminAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -13,7 +13,6 @@ export default function InventoryAdminsPage() {
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState('create'); // 'create', 'edit', 'view'
     const [selectedAdmin, setSelectedAdmin] = useState(null);
-    const [toast, setToast] = useState(null);
     const { user } = useAuth();
 
     const [formData, setFormData] = useState({
@@ -34,10 +33,7 @@ export default function InventoryAdminsPage() {
             setInventoryAdmins(response.data.data || []);
         } catch (error) {
             console.error('Error fetching inventory admins:', error);
-            setToast({
-                type: 'error',
-                message: 'Failed to fetch inventory admins'
-            });
+            toast.error('Failed to fetch inventory admins');
         } finally {
             setLoading(false);
         }
@@ -48,16 +44,10 @@ export default function InventoryAdminsPage() {
         try {
             if (modalMode === 'create') {
                 await inventoryAdminAPI.createInventoryAdmin(formData);
-                setToast({
-                    type: 'success',
-                    message: 'Inventory admin created successfully'
-                });
+                toast.success('Inventory admin created successfully');
             } else if (modalMode === 'edit') {
                 await inventoryAdminAPI.updateInventoryAdmin(selectedAdmin.id, formData);
-                setToast({
-                    type: 'success',
-                    message: 'Inventory admin updated successfully'
-                });
+                toast.success('Inventory admin updated successfully');
             }
 
             setShowModal(false);
@@ -65,10 +55,7 @@ export default function InventoryAdminsPage() {
             fetchInventoryAdmins();
         } catch (error) {
             console.error('Error saving inventory admin:', error);
-            setToast({
-                type: 'error',
-                message: error.response?.data?.message || 'Failed to save inventory admin'
-            });
+            toast.error(error.response?.data?.message || 'Failed to save inventory admin');
         }
     };
 
@@ -76,17 +63,11 @@ export default function InventoryAdminsPage() {
         if (window.confirm('Are you sure you want to delete this inventory admin?')) {
             try {
                 await inventoryAdminAPI.deleteInventoryAdmin(adminId);
-                setToast({
-                    type: 'success',
-                    message: 'Inventory admin deleted successfully'
-                });
+                toast.success('Inventory admin deleted successfully');
                 fetchInventoryAdmins();
             } catch (error) {
                 console.error('Error deleting inventory admin:', error);
-                setToast({
-                    type: 'error',
-                    message: 'Failed to delete inventory admin'
-                });
+                toast.error('Failed to delete inventory admin');
             }
         }
     };
@@ -358,14 +339,6 @@ export default function InventoryAdminsPage() {
                 </form>
             </Modal>
 
-            {/* Toast */}
-            {toast && (
-                <Toast
-                    type={toast.type}
-                    message={toast.message}
-                    onClose={() => setToast(null)}
-                />
-            )}
         </div>
     );
 }

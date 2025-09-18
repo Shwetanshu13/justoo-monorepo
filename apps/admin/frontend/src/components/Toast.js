@@ -16,7 +16,7 @@ export default function Toast({ type = 'success', message, onClose }) {
             const timer = setTimeout(onClose, 3000); // Auto-close after 3 seconds
             return () => clearTimeout(timer);
         }
-    }, [type, message, onClose]);
+    }, [type, message]); // Removed onClose from dependencies
 
     return null;
 }

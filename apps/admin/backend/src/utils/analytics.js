@@ -9,8 +9,9 @@ export const getOrderAnalytics = async (period = 'daily', startDate, endDate) =>
         const baseConditions = [];
 
         if (startDate && endDate) {
+            // Use SQL template literals for proper date handling
             baseConditions.push(
-                between(orders.createdAt, startDate, endDate)
+                sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate}`
             );
         }
 
@@ -41,8 +42,8 @@ export const getOrderAnalytics = async (period = 'daily', startDate, endDate) =>
             .from(orders)
             .where(and(...baseConditions, eq(orders.status, 'delivered')));
 
-        // Daily revenue trend (last 30 days)
-        const dailyRevenueResult = await db
+        // Daily revenue trend (last 30 days or within date range)
+        let dailyRevenueQuery = db
             .select({
                 date: sql`DATE(${orders.createdAt})`,
                 revenue: sum(orders.totalAmount),
@@ -50,11 +51,27 @@ export const getOrderAnalytics = async (period = 'daily', startDate, endDate) =>
             })
             .from(orders)
             .where(and(
-                eq(orders.status, 'delivered'),
-                sql`${orders.createdAt} >= NOW() - INTERVAL '30 days'`
+                eq(orders.status, 'delivered')
             ))
             .groupBy(sql`DATE(${orders.createdAt})`)
             .orderBy(sql`DATE(${orders.createdAt})`);
+
+        // Apply date filter to daily trend if provided
+        if (startDate && endDate) {
+            dailyRevenueQuery = dailyRevenueQuery.where(
+                and(
+                    sql`${orders.createdAt} >= ${startDate}`,
+                    sql`${orders.createdAt} <= ${endDate}`
+                )
+            );
+        } else {
+            // Default to last 30 days if no date range provided
+            dailyRevenueQuery = dailyRevenueQuery.where(
+                sql`${orders.createdAt} >= NOW() - INTERVAL '30 days'`
+            );
+        }
+
+        const dailyRevenueResult = await dailyRevenueQuery;
 
         return {
             totalOrders: totalOrdersResult[0]?.count || 0,
@@ -76,13 +93,25 @@ export const getOrderAnalytics = async (period = 'daily', startDate, endDate) =>
     }
 };
 
-export const getInventoryAnalytics = async () => {
+export const getInventoryAnalytics = async (startDate, endDate) => {
     try {
+        // Base query conditions
+        const baseConditions = [];
+
+        if (startDate && endDate) {
+            baseConditions.push(
+                sql`${items.createdAt} >= ${startDate} AND ${items.createdAt} <= ${endDate}`
+            );
+        }
+
         // Low stock items
         const lowStockResult = await db
             .select()
             .from(items)
-            .where(sql`${items.quantity} <= ${items.minStockLevel}`);
+            .where(and(
+                sql`${items.quantity} <= ${items.minStockLevel}`,
+                ...baseConditions
+            ));
 
         // Total items and value
         const inventoryStatsResult = await db
@@ -92,7 +121,10 @@ export const getInventoryAnalytics = async () => {
                 avgPrice: avg(items.price)
             })
             .from(items)
-            .where(eq(items.isActive, 1));
+            .where(and(
+                eq(items.isActive, 1),
+                ...baseConditions
+            ));
 
         // Category-wise distribution
         const categoryStatsResult = await db
@@ -102,7 +134,10 @@ export const getInventoryAnalytics = async () => {
                 totalValue: sum(sql`${items.price} * ${items.quantity}`)
             })
             .from(items)
-            .where(eq(items.isActive, 1))
+            .where(and(
+                eq(items.isActive, 1),
+                ...baseConditions
+            ))
             .groupBy(items.category);
 
         // Top selling items (based on order_items)
@@ -115,6 +150,7 @@ export const getInventoryAnalytics = async () => {
             })
             .from(order_items)
             .innerJoin(items, eq(order_items.itemId, items.id))
+            .where(startDate && endDate ? sql`${order_items.createdAt} >= ${startDate} AND ${order_items.createdAt} <= ${endDate}` : undefined)
             .groupBy(order_items.itemId, items.name)
             .orderBy(desc(sum(order_items.quantity)))
             .limit(10);
@@ -133,8 +169,17 @@ export const getInventoryAnalytics = async () => {
     }
 };
 
-export const getUserAnalytics = async () => {
+export const getUserAnalytics = async (startDate, endDate) => {
     try {
+        // Base query conditions
+        const baseConditions = [];
+
+        if (startDate && endDate) {
+            baseConditions.push(
+                sql`${admins.createdAt} >= ${startDate} AND ${admins.createdAt} <= ${endDate}`
+            );
+        }
+
         // Total users by role
         const usersByRoleResult = await db
             .select({
@@ -142,18 +187,31 @@ export const getUserAnalytics = async () => {
                 count: count()
             })
             .from(admins)
+            .where(and(...baseConditions))
             .groupBy(admins.role);
 
-        // Recent registrations (last 30 days)
-        const recentRegistrationsResult = await db
+        // Recent registrations (within date range or last 30 days)
+        let recentRegistrationsQuery = db
             .select({ count: count() })
-            .from(admins)
-            .where(sql`${admins.createdAt} >= NOW() - INTERVAL '30 days'`);
+            .from(admins);
+
+        if (startDate && endDate) {
+            recentRegistrationsQuery = recentRegistrationsQuery.where(
+                sql`${admins.createdAt} >= ${startDate} AND ${admins.createdAt} <= ${endDate}`
+            );
+        } else {
+            recentRegistrationsQuery = recentRegistrationsQuery.where(
+                sql`${admins.createdAt} >= NOW() - INTERVAL '30 days'`
+            );
+        }
+
+        const recentRegistrationsResult = await recentRegistrationsQuery;
 
         // Active customers (those who have placed orders)
         const activeCustomersResult = await db
             .select({ count: sql`COUNT(DISTINCT ${orders.userId})` })
-            .from(orders);
+            .from(orders)
+            .where(startDate && endDate ? sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate}` : undefined);
 
         return {
             usersByRole: usersByRoleResult.reduce((acc, curr) => {
@@ -169,8 +227,21 @@ export const getUserAnalytics = async () => {
     }
 };
 
-export const getPaymentAnalytics = async () => {
+export const getPaymentAnalytics = async (startDate, endDate) => {
     try {
+        // Base query conditions for payments
+        const paymentConditions = [eq(payments.status, 'completed')];
+        const orderConditions = [];
+
+        if (startDate && endDate) {
+            paymentConditions.push(
+                sql`${payments.createdAt} >= ${startDate} AND ${payments.createdAt} <= ${endDate}`
+            );
+            orderConditions.push(
+                sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate}`
+            );
+        }
+
         // Payment method breakdown
         const paymentMethodsResult = await db
             .select({
@@ -179,7 +250,7 @@ export const getPaymentAnalytics = async () => {
                 total: sum(payments.amount)
             })
             .from(payments)
-            .where(eq(payments.status, 'completed'))
+            .where(and(...paymentConditions))
             .groupBy(payments.method);
 
         // Order status breakdown
@@ -190,6 +261,7 @@ export const getPaymentAnalytics = async () => {
                 totalAmount: sum(orders.totalAmount)
             })
             .from(orders)
+            .where(and(...orderConditions))
             .groupBy(orders.status);
 
         return {
