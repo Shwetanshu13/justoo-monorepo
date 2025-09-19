@@ -46,46 +46,46 @@ export const items = pgTable('items', {
     discount: numeric('discount', { precision: 5, scale: 2 }).default('0.00'),
     unit: varchar('unit', { length: 50 }).notNull(),
     description: text('description'),
-    minStockLevel: integer('minStockLevel').default(10).notNull(),
+    minStockLevel: integer('min_stock_level').default(10).notNull(),
     category: varchar('category', { length: 100 }),
-    isActive: integer('isActive').default(1).notNull(),
-    createdAt: timestamp('createdAt').defaultNow(),
-    updatedAt: timestamp('updatedAt').defaultNow(),
+    isActive: integer('is_active').default(1).notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const orders = pgTable('orders', {
     id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-    customerId: integer('customerId').notNull(),
-    deliveryAddressId: integer('deliveryAddressId'),
+    customerId: integer('customer_id').notNull(),
+    deliveryAddressId: integer('delivery_address_id'),
     status: orderStatus('status').default('placed').notNull(),
-    totalAmount: numeric('totalAmount', { precision: 10, scale: 2 }).notNull(),
-    itemCount: integer('itemCount').notNull(),
+    totalAmount: numeric('total_amount', { precision: 10, scale: 2 }).notNull(),
+    itemCount: integer('item_count').notNull(),
     subtotal: numeric('subtotal', { precision: 10, scale: 2 }).notNull(),
-    deliveryFee: numeric('deliveryFee', { precision: 8, scale: 2 }).default('0.00'),
-    taxAmount: numeric('taxAmount', { precision: 8, scale: 2 }).default('0.00'),
-    discountAmount: numeric('discountAmount', { precision: 8, scale: 2 }).default('0.00'),
+    deliveryFee: numeric('delivery_fee', { precision: 8, scale: 2 }).default('0.00'),
+    taxAmount: numeric('tax_amount', { precision: 8, scale: 2 }).default('0.00'),
+    discountAmount: numeric('discount_amount', { precision: 8, scale: 2 }).default('0.00'),
     notes: text('notes'),
-    specialInstructions: text('specialInstructions'),
-    riderId: integer('riderId'),
-    deliveryZoneId: integer('deliveryZoneId'),
-    estimatedDeliveryTime: timestamp('estimatedDeliveryTime'),
-    actualDeliveryTime: timestamp('actualDeliveryTime'),
-    deliveredAt: timestamp('deliveredAt'),
-    orderPlacedAt: timestamp('orderPlacedAt').defaultNow(),
-    createdAt: timestamp('createdAt').defaultNow(),
-    updatedAt: timestamp('updatedAt').defaultNow(),
+    specialInstructions: text('special_instructions'),
+    riderId: integer('rider_id'),
+    deliveryZoneId: integer('delivery_zone_id'),
+    estimatedDeliveryTime: timestamp('estimated_delivery_time'),
+    actualDeliveryTime: timestamp('actual_delivery_time'),
+    deliveredAt: timestamp('delivered_at'),
+    orderPlacedAt: timestamp('order_placed_at').defaultNow(),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const orderItems = pgTable('order_items', {
     id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-    orderId: integer('orderId').notNull(),
-    itemId: integer('itemId').notNull(),
-    itemName: varchar('itemName', { length: 255 }).notNull(),
+    orderId: integer('order_id').notNull(),
+    itemId: integer('item_id').notNull(),
+    itemName: varchar('item_name', { length: 255 }).notNull(),
     quantity: integer('quantity').notNull(),
-    unitPrice: numeric('unitPrice', { precision: 10, scale: 2 }).notNull(),
-    totalPrice: numeric('totalPrice', { precision: 10, scale: 2 }).notNull(),
+    unitPrice: numeric('unit_price', { precision: 10, scale: 2 }).notNull(),
+    totalPrice: numeric('total_price', { precision: 10, scale: 2 }).notNull(),
     unit: varchar('unit', { length: 50 }).notNull(),
-    createdAt: timestamp('createdAt').defaultNow(),
+    createdAt: timestamp('created_at').defaultNow(),
 });
 
 export const justooPayments = pgTable('justoo_payments', {
@@ -126,6 +126,7 @@ export const customers = pgTable('customers', {
     phone: varchar('phone', { length: 20 }).notNull().unique(),
     email: varchar('email', { length: 255 }),
     name: varchar('name', { length: 255 }).notNull(),
+    password: varchar('password', { length: 255 }).notNull(),
     profileImage: varchar('profile_image', { length: 500 }),
     dateOfBirth: timestamp('date_of_birth'),
     gender: varchar('gender', { length: 20 }),
@@ -134,6 +135,7 @@ export const customers = pgTable('customers', {
     totalSpent: numeric('total_spent', { precision: 10, scale: 2 }).default('0.00'),
     averageRating: numeric('average_rating', { precision: 3, scale: 2 }).default('0.00'),
     lastOrderDate: timestamp('last_order_date'),
+    lastLogin: timestamp('last_login'),
     preferredPaymentMethod: paymentMethod('preferred_payment_method'),
     isActive: integer('is_active').default(1).notNull(),
     emailVerified: integer('email_verified').default(0).notNull(),
@@ -178,22 +180,6 @@ export const deliveryZones = pgTable('delivery_zones', {
     updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const customerPreferences = pgTable('customer_preferences', {
-    id: serial('id').primaryKey(),
-    customerId: integer('customer_id').notNull(),
-    preferredLanguage: varchar('preferred_language', { length: 10 }).default('en'),
-    notificationPreferences: varchar('notification_preferences', { length: 500 }), // JSON string for notification settings
-    dietaryRestrictions: varchar('dietary_restrictions', { length: 500 }), // JSON string for dietary preferences
-    favoriteItems: varchar('favorite_items', { length: 1000 }), // JSON string for favorite item IDs
-    allergens: varchar('allergens', { length: 500 }), // JSON string for allergens
-    specialInstructions: text('special_instructions'),
-    contactlessDelivery: integer('contactless_delivery').default(0).notNull(),
-    leaveAtDoor: integer('leave_at_door').default(0).notNull(),
-    ringBell: integer('ring_bell').default(1).notNull(),
-    createdAt: timestamp('created_at').defaultNow(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-});
-
 export const customerNotifications = pgTable('customer_notifications', {
     id: serial('id').primaryKey(),
     customerId: integer('customer_id').notNull(),
@@ -218,5 +204,4 @@ export const users = inventoryUsers;
 // New table aliases
 export const customer_addresses = customerAddresses;
 export const delivery_zones = deliveryZones;
-export const customer_preferences = customerPreferences;
 export const customer_notifications = customerNotifications;
