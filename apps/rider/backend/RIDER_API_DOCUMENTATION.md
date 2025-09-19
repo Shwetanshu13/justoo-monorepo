@@ -1,15 +1,19 @@
 # Rider Backend API Documentation
 
 ## Overview
+
 The Rider Backend provides comprehensive APIs for delivery rider management, order handling, notifications, and delivery operations.
 
 ## Base URL
+
 ```
 http://localhost:3006/api
 ```
 
 ## Authentication
+
 All endpoints (except authentication) require JWT token in Authorization header:
+
 ```
 Authorization: Bearer <jwt_token>
 ```
@@ -19,9 +23,11 @@ Authorization: Bearer <jwt_token>
 ## 1. Authentication Endpoints
 
 ### POST /auth/login
+
 Login for riders.
 
 **Request Body:**
+
 ```json
 {
   "email": "rider@example.com",
@@ -30,6 +36,7 @@ Login for riders.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -44,9 +51,11 @@ Login for riders.
 ```
 
 ### POST /auth/register
+
 Register new rider account.
 
 **Request Body:**
+
 ```json
 {
   "name": "John Doe",
@@ -63,9 +72,11 @@ Register new rider account.
 ## 2. Rider Management Endpoints
 
 ### GET /rider/profile
+
 Get rider's profile information.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -82,9 +93,11 @@ Get rider's profile information.
 ```
 
 ### PUT /rider/profile
+
 Update rider's profile information.
 
 **Request Body:**
+
 ```json
 {
   "name": "John Doe Updated",
@@ -95,9 +108,11 @@ Update rider's profile information.
 ```
 
 ### PUT /rider/password
+
 Change rider's password.
 
 **Request Body:**
+
 ```json
 {
   "currentPassword": "oldpassword",
@@ -106,9 +121,11 @@ Change rider's password.
 ```
 
 ### PUT /rider/status
+
 Update rider's availability status.
 
 **Request Body:**
+
 ```json
 {
   "status": "active" // active, busy, inactive
@@ -116,9 +133,11 @@ Update rider's availability status.
 ```
 
 ### GET /rider/stats
+
 Get rider's delivery statistics and earnings.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -126,7 +145,7 @@ Get rider's delivery statistics and earnings.
     "totalDeliveries": 150,
     "completedDeliveries": 145,
     "cancelledDeliveries": 5,
-    "totalEarnings": 2500.00,
+    "totalEarnings": 2500.0,
     "averageRating": 4.8,
     "todayDeliveries": 8
   }
@@ -138,33 +157,42 @@ Get rider's delivery statistics and earnings.
 ## 3. Order Management Endpoints
 
 ### GET /orders/current
+
 Get the current order assigned to the rider.
 
 ### GET /orders/assigned
+
 Get all orders assigned to the rider with pagination.
 
 **Query Parameters:**
+
 - `status` (optional): Filter by order status
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
 
 ### GET /orders/completed
+
 Get all completed orders for the rider with pagination.
 
 **Query Parameters:**
+
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
 
 ### GET /orders/:orderId
+
 Get detailed information about a specific order.
 
 ### POST /orders/:orderId/accept
+
 Accept an order assignment.
 
 ### PUT /orders/:orderId/status
+
 Update order status.
 
 **Request Body:**
+
 ```json
 {
   "status": "out_for_delivery", // confirmed, preparing, ready, out_for_delivery, delivered, cancelled
@@ -177,9 +205,11 @@ Update order status.
 ## 4. Delivery Management Endpoints
 
 ### POST /delivery/:orderId/start
+
 Start delivery for an order.
 
 **Request Body:**
+
 ```json
 {
   "estimatedDeliveryTime": "2024-01-15T14:30:00Z"
@@ -187,9 +217,11 @@ Start delivery for an order.
 ```
 
 ### POST /delivery/:orderId/complete
+
 Mark delivery as completed.
 
 **Request Body:**
+
 ```json
 {
   "deliveryNotes": "Delivered successfully",
@@ -199,9 +231,11 @@ Mark delivery as completed.
 ```
 
 ### POST /delivery/:orderId/fail
+
 Mark delivery as failed.
 
 **Request Body:**
+
 ```json
 {
   "failureReason": "Customer not available",
@@ -210,32 +244,39 @@ Mark delivery as failed.
 ```
 
 ### PUT /delivery/:orderId/progress
+
 Update delivery progress and location.
 
 **Request Body:**
+
 ```json
 {
   "latitude": 40.7128,
-  "longitude": -74.0060,
+  "longitude": -74.006,
   "progressNotes": "Arriving in 5 minutes"
 }
 ```
 
 ### GET /delivery/history
+
 Get delivery history for the rider.
 
 **Query Parameters:**
+
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
 - `status` (optional): Filter by delivery status
 
 ### GET /delivery/stats
+
 Get delivery statistics for the rider.
 
 **Query Parameters:**
+
 - `period` (optional): day, week, month, year (default: month)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -245,7 +286,7 @@ Get delivery statistics for the rider.
     "failedDeliveries": 2,
     "cancelledDeliveries": 1,
     "averageDeliveryTime": 25.5,
-    "totalEarnings": 180.00
+    "totalEarnings": 180.0
   },
   "period": "month"
 }
@@ -256,16 +297,20 @@ Get delivery statistics for the rider.
 ## 5. Notification Endpoints
 
 ### GET /notifications
+
 Get rider's notifications with pagination.
 
 **Query Parameters:**
+
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
 
 ### GET /notifications/count
+
 Get unread notification count.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -274,12 +319,15 @@ Get unread notification count.
 ```
 
 ### PUT /notifications/:id/read
+
 Mark specific notification as read.
 
 ### PUT /notifications/read-all
+
 Mark all notifications as read.
 
 ### DELETE /notifications/:id
+
 Delete a notification.
 
 ---
@@ -297,6 +345,7 @@ All endpoints return errors in the following format:
 ```
 
 ### Common HTTP Status Codes:
+
 - `200` - Success
 - `400` - Bad Request (validation errors)
 - `401` - Unauthorized (invalid/missing token)
@@ -308,15 +357,18 @@ All endpoints return errors in the following format:
 ## Data Models
 
 ### Order Status Flow:
+
 1. `placed` → `confirmed` → `preparing` → `ready` → `out_for_delivery` → `delivered`
 2. Any status can transition to `cancelled` or `failed`
 
 ### Rider Status:
+
 - `active` - Available for deliveries
 - `busy` - Currently on delivery
 - `inactive` - Not available
 
 ### Vehicle Types:
+
 - `motorcycle`
 - `bicycle`
 - `car`
@@ -325,11 +377,14 @@ All endpoints return errors in the following format:
 ---
 
 ## Rate Limiting
+
 - Authentication endpoints: 5 requests per minute
 - Other endpoints: 100 requests per minute per rider
 
 ## WebSocket Support
+
 Real-time updates available for:
+
 - New order assignments
 - Order status changes
 - Notification delivery
