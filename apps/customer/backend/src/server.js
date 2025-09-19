@@ -8,7 +8,6 @@ import { config } from '@dotenvx/dotenvx';
 // Load environment variables
 config();
 
-import db from './config/dbConfig.js';
 import errorHandler from './middlewares/errorHandler.js';
 
 // Import routes
@@ -19,7 +18,10 @@ import orderRoutes from './routes/orderRoutes.js';
 import addressRoutes from './routes/addressRoutes.js';
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 8080;
+
+// Trust proxy for ngrok and other reverse proxies
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet({

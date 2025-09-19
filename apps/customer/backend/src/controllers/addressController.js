@@ -1,7 +1,7 @@
 import db from '../config/dbConfig.js';
-import { customerAddresses, deliveryZones } from '@justoo/db';
+import { customerAddresses } from '@justoo/db';
 import { eq, and, sql, desc } from 'drizzle-orm';
-import { successResponse, errorResponse, calculateDistance } from '../utils/response.js';
+import { successResponse, errorResponse } from '../utils/response.js';
 
 // Get customer's addresses
 export const getCustomerAddresses = async (req, res) => {
@@ -165,7 +165,7 @@ export const updateAddress = async (req, res) => {
 
         // Update address
         const updateData = {
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date()
         };
 
         if (type !== undefined) updateData.type = type;
@@ -224,7 +224,7 @@ export const deleteAddress = async (req, res) => {
             .update(customerAddresses)
             .set({
                 isActive: 0,
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date()
             })
             .where(eq(customerAddresses.id, parseInt(addressId)));
 
@@ -269,7 +269,7 @@ export const setDefaultAddress = async (req, res) => {
                 .update(customerAddresses)
                 .set({
                     isDefault: 1,
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date()
                 })
                 .where(eq(customerAddresses.id, parseInt(addressId)));
         });
@@ -323,48 +323,12 @@ export const validateAddress = async (req, res) => {
             return errorResponse(res, 'Invalid latitude or longitude values', 400);
         }
 
-        // Check if coordinates are within service area
-        const zones = await db
-            .select()
-            .from(deliveryZones)
-            .where(sql`${deliveryZones.isActive} = 1`);
-
-        let isInServiceArea = false;
-        let nearestZone = null;
-        let minDistance = Infinity;
-
-        for (const zone of zones) {
-            if (zone.centerLatitude && zone.centerLongitude) {
-                const distance = calculateDistance(
-                    lat,
-                    lng,
-                    parseFloat(zone.centerLatitude),
-                    parseFloat(zone.centerLongitude)
-                );
-
-                if (distance <= parseFloat(zone.radiusKm)) {
-                    isInServiceArea = true;
-                    nearestZone = zone;
-                    break;
-                }
-
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestZone = zone;
-                }
-            }
-        }
-
+        // Simplified address validation - just check if coordinates are valid
+        // Since delivery fees are now amount-based, we don't need complex zone validation
         return successResponse(res, 'Address validation completed', {
             isValid: true,
-            inServiceArea: isInServiceArea,
-            nearestZone: nearestZone ? {
-                id: nearestZone.id,
-                name: nearestZone.name,
-                distance: minDistance,
-                estimatedDeliveryTime: nearestZone.estimatedDeliveryTime,
-                baseDeliveryFee: nearestZone.baseDeliveryFee
-            } : null
+            inServiceArea: true, // Simplified - all valid coordinates are in service area
+            estimatedDeliveryTime: 60 // Default 60 minutes delivery time
         });
     } catch (error) {
         console.error('Validate address error:', error);

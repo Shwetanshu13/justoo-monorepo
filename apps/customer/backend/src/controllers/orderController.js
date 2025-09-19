@@ -1,7 +1,7 @@
 import db from '../config/dbConfig.js';
-import { orders, orderItems, items, customerAddresses, deliveryZones, justooPayments } from '@justoo/db';
+import { orders, orderItems, items, customerAddresses, justooPayments } from '@justoo/db';
 import { eq, and, sql, desc, inArray } from 'drizzle-orm';
-import { successResponse, errorResponse, getPaginationData, generateOrderNumber, calculateDistance } from '../utils/response.js';
+import { successResponse, errorResponse, getPaginationData, generateOrderNumber } from '../utils/response.js';
 import { carts } from './cartController.js';
 
 // Create new order
@@ -17,11 +17,13 @@ export const createOrder = async (req, res) => {
 
         // Get customer's cart
         const cart = carts.get(customerId); if (!cart || cart.items.length === 0) {
+            console.log("Cart is empty");
             return errorResponse(res, 'Cart is empty', 400);
         }
 
         // Validate delivery address
         if (!deliveryAddressId) {
+            console.log("Delivery address is required");
             return errorResponse(res, 'Delivery address is required', 400);
         }
 
@@ -36,6 +38,7 @@ export const createOrder = async (req, res) => {
             .limit(1);
 
         if (address.length === 0) {
+            console.log("Invalid delivery address");
             return errorResponse(res, 'Invalid delivery address', 400);
         }
 
@@ -56,17 +59,14 @@ export const createOrder = async (req, res) => {
             }
         }
 
-        // Calculate delivery zone and fee
-        const deliveryZone = await getDeliveryZone(address[0]);
-        if (!deliveryZone) {
-            return errorResponse(res, 'Delivery not available for this location', 400);
-        }
-
-        // Calculate order totals
+        // Calculate order totals (simplified - no distance-based zones needed)
         const subtotal = cart.total;
-        const deliveryFee = deliveryZone.baseDeliveryFee;
+        const deliveryFee = subtotal < 100 ? 40 : 0; // 40 rs delivery fee if order < 100
         const taxAmount = subtotal * 0.05; // 5% tax
         const totalAmount = subtotal + deliveryFee + taxAmount;
+
+        // Use default delivery time (15 minutes)
+        const defaultDeliveryTime = 15;
 
         // Generate order number
         const orderNumber = generateOrderNumber();
@@ -87,9 +87,8 @@ export const createOrder = async (req, res) => {
                     taxAmount,
                     notes,
                     specialInstructions,
-                    deliveryZoneId: deliveryZone.id,
-                    estimatedDeliveryTime: new Date(Date.now() + deliveryZone.estimatedDeliveryTime * 60 * 1000).toISOString(),
-                    orderPlacedAt: new Date().toISOString()
+                    estimatedDeliveryTime: new Date(Date.now() + defaultDeliveryTime * 60 * 1000),
+                    orderPlacedAt: new Date()
                 })
                 .returning();
 
@@ -112,7 +111,7 @@ export const createOrder = async (req, res) => {
                     .update(items)
                     .set({
                         quantity: sql`${items.quantity} - ${cartItem.quantity}`,
-                        updatedAt: new Date().toISOString()
+                        updatedAt: new Date()
                     })
                     .where(eq(items.id, cartItem.id));
             }
@@ -139,7 +138,7 @@ export const createOrder = async (req, res) => {
         return successResponse(res, 'Order placed successfully', {
             order: orderDetails,
             orderNumber,
-            estimatedDelivery: deliveryZone.estimatedDeliveryTime
+            estimatedDelivery: defaultDeliveryTime
         }, 201);
     } catch (error) {
         console.error('Create order error:', error);
@@ -269,7 +268,7 @@ export const cancelOrder = async (req, res) => {
                 .update(orders)
                 .set({
                     status: 'cancelled',
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date()
                 })
                 .where(eq(orders.id, parseInt(orderId)));
 
@@ -284,7 +283,7 @@ export const cancelOrder = async (req, res) => {
                     .update(items)
                     .set({
                         quantity: sql`${items.quantity} + ${orderItem.quantity}`,
-                        updatedAt: new Date().toISOString()
+                        updatedAt: new Date()
                     })
                     .where(eq(items.id, orderItem.itemId));
             }
@@ -314,7 +313,6 @@ const getOrderDetails = async (orderId) => {
             notes: orders.notes,
             specialInstructions: orders.specialInstructions,
             riderId: orders.riderId,
-            deliveryZoneId: orders.deliveryZoneId,
             estimatedDeliveryTime: orders.estimatedDeliveryTime,
             actualDeliveryTime: orders.actualDeliveryTime,
             deliveredAt: orders.deliveredAt,
@@ -354,32 +352,6 @@ const getOrderDetails = async (orderId) => {
         deliveryAddress: address[0] || null,
         payment: payment[0] || null
     };
-};
-
-// Get delivery zone for address
-const getDeliveryZone = async (address) => {
-    const zones = await db
-        .select()
-        .from(deliveryZones)
-        .where(sql`${deliveryZones.isActive} = 1`);
-
-    for (const zone of zones) {
-        if (address.latitude && address.longitude && zone.centerLatitude && zone.centerLongitude) {
-            const distance = calculateDistance(
-                parseFloat(address.latitude),
-                parseFloat(address.longitude),
-                parseFloat(zone.centerLatitude),
-                parseFloat(zone.centerLongitude)
-            );
-
-            if (distance <= parseFloat(zone.radiusKm)) {
-                return zone;
-            }
-        }
-    }
-
-    // Return default zone if no coordinate match
-    return zones.find(zone => zone.name === 'Default') || zones[0];
 };
 
 // Get order statistics

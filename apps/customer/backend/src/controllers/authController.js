@@ -138,7 +138,7 @@ export const login = async (req, res) => {
         // Update last login
         await db
             .update(customers)
-            .set({ lastLogin: new Date().toISOString() })
+            .set({ lastLogin: new Date() })
             .where(eq(customers.id, customer[0].id));
 
         // Generate JWT token
@@ -236,7 +236,7 @@ export const updateProfile = async (req, res) => {
 
         // Update customer
         const updateData = {
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date()
         };
 
         if (name !== undefined) updateData.name = name;
@@ -298,7 +298,7 @@ export const changePassword = async (req, res) => {
             .update(customers)
             .set({
                 password: hashedPassword,
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date()
             })
             .where(eq(customers.id, req.customer.id));
 

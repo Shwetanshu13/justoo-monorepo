@@ -70,7 +70,7 @@ A comprehensive backend API for the Justoo 10-minute delivery platform's custome
    pnpm run start
    ```
 
-The server will start on `http://localhost:3002`
+The server will start on `http://localhost:8080`
 
 ## API Endpoints
 
