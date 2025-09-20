@@ -2,6 +2,7 @@ import db from '../config/dbConfig.js';
 import { items, customers } from '@justoo/db';
 import { eq, and, or, sql, desc, asc, like, gte, lte, inArray } from 'drizzle-orm';
 import { successResponse, errorResponse, getPaginationData } from '../utils/response.js';
+import { processItemsImages, processItemImage } from '../config/cloudinary.js';
 
 // Get all items with pagination, filtering, and sorting
 export const getItems = async (req, res) => {
@@ -71,8 +72,11 @@ export const getItems = async (req, res) => {
 
         const pagination = getPaginationData(page, limit, totalItems);
 
+        // Process images for customer-facing response
+        const processedItems = processItemsImages(itemsList);
+
         return successResponse(res, 'Items retrieved successfully', {
-            items: itemsList,
+            items: processedItems,
             pagination
         });
     } catch (error) {
@@ -100,7 +104,10 @@ export const getItemById = async (req, res) => {
             return errorResponse(res, 'Item not found', 404);
         }
 
-        return successResponse(res, 'Item retrieved successfully', item[0]);
+        // Process image for customer-facing response
+        const processedItem = processItemImage(item[0]);
+
+        return successResponse(res, 'Item retrieved successfully', processedItem);
     } catch (error) {
         console.error('Get item by ID error:', error);
         return errorResponse(res, 'Failed to retrieve item', 500);
@@ -147,7 +154,10 @@ export const getFeaturedItems = async (req, res) => {
             .orderBy(desc(items.discount))
             .limit(parseInt(limit));
 
-        return successResponse(res, 'Featured items retrieved successfully', featuredItems);
+        // Process images for customer-facing response
+        const processedItems = processItemsImages(featuredItems);
+
+        return successResponse(res, 'Featured items retrieved successfully', processedItems);
     } catch (error) {
         console.error('Get featured items error:', error);
         return errorResponse(res, 'Failed to retrieve featured items', 500);
@@ -182,10 +192,13 @@ export const searchItems = async (req, res) => {
       END`))
             .limit(parseInt(limit));
 
+        // Process images for customer-facing response
+        const processedResults = processItemsImages(searchResults);
+
         return successResponse(res, 'Search results retrieved successfully', {
             query: q,
-            results: searchResults,
-            total: searchResults.length
+            results: processedResults,
+            total: processedResults.length
         });
     } catch (error) {
         console.error('Search items error:', error);
@@ -232,9 +245,12 @@ export const getItemsByCategory = async (req, res) => {
         const totalItems = parseInt(totalResult[0].count);
         const pagination = getPaginationData(page, limit, totalItems);
 
+        // Process images for customer-facing response
+        const processedItems = processItemsImages(categoryItems);
+
         return successResponse(res, `Items in category '${category}' retrieved successfully`, {
             category,
-            items: categoryItems,
+            items: processedItems,
             pagination
         });
     } catch (error) {
@@ -291,8 +307,11 @@ export const getItemSuggestions = async (req, res) => {
                 .limit(parseInt(limit));
         }
 
+        // Process images for customer-facing response
+        const processedSuggestions = processItemsImages(suggestions);
+
         return successResponse(res, 'Item suggestions retrieved successfully', {
-            suggestions,
+            suggestions: processedSuggestions,
             basedOn: categories.length > 0 ? 'previous orders' : 'featured items'
         });
     } catch (error) {

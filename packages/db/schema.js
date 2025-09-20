@@ -46,6 +46,8 @@ export const items = pgTable('items', {
     discount: numeric('discount', { precision: 5, scale: 2 }).default('0.00'),
     unit: varchar('unit', { length: 50 }).notNull(),
     description: text('description'),
+    image: varchar('image', { length: 500 }), // Cloudinary image URL
+    imagePublicId: varchar('image_public_id', { length: 255 }), // Cloudinary public ID for deletion
     minStockLevel: integer('min_stock_level').default(10).notNull(),
     category: varchar('category', { length: 100 }),
     isActive: integer('is_active').default(1).notNull(),

@@ -13,6 +13,8 @@ export default function EditItemPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [item, setItem] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
     const router = useRouter();
     const params = useParams();
     const itemId = params.id;
@@ -47,6 +49,11 @@ export default function EditItemPage() {
                 const itemData = response.data.data;
                 setItem(itemData);
 
+                // Set image preview if item has an image
+                if (itemData.image) {
+                    setImagePreview(itemData.image);
+                }
+
                 // Populate form with existing data
                 reset({
                     name: itemData.name || '',
@@ -74,20 +81,57 @@ export default function EditItemPage() {
         }
     }, [itemId, reset, router]);
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                toast.error('Please select a valid image file');
+                return;
+            }
+
+            // Validate file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size must be less than 5MB');
+                return;
+            }
+
+            setSelectedImage(file);
+            const reader = new FileReader();
+            reader.onload = (e) => setImagePreview(e.target.result);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = () => {
+        setSelectedImage(null);
+        // If item had an existing image, keep the preview but mark for removal
+        if (item?.image && !selectedImage) {
+            setImagePreview(null);
+        } else {
+            setImagePreview(item?.image || null);
+        }
+    };
+
     const onSubmit = async (data) => {
         setIsSubmitting(true);
         try {
-            // Convert string values to proper types
-            const itemData = {
-                ...data,
-                price: parseFloat(data.price),
-                quantity: parseInt(data.quantity),
-                minStockLevel: parseInt(data.minStockLevel),
-                discount: parseFloat(data.discount),
-                isActive: parseInt(data.isActive)
-            };
+            // Create FormData for file upload
+            const formData = new FormData();
 
-            await inventoryAPI.updateItem(itemId, itemData);
+            // Add all form fields
+            Object.keys(data).forEach(key => {
+                if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
+                    formData.append(key, data[key]);
+                }
+            });
+
+            // Add image if selected
+            if (selectedImage) {
+                formData.append('image', selectedImage);
+            }
+
+            await inventoryAPI.updateItem(itemId, formData);
             toast.success('Item updated successfully!');
             router.push('/dashboard/inventory');
         } catch (error) {
@@ -300,17 +344,67 @@ export default function EditItemPage() {
                             </div>
                         </div>
 
-                        {/* Description */}
+                        {/* Image Upload */}
                         <div>
-                            <label htmlFor="description" className="block text-sm font-semibold text-gray-800 mb-2">
-                                Description
+                            <label className="block text-sm font-semibold text-gray-800 mb-2">
+                                Item Image
                             </label>
-                            <textarea
-                                {...register('description')}
-                                rows={4}
-                                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900 placeholder-gray-400 px-4 py-3 text-sm resize-none"
-                                placeholder="Enter item description (optional)"
-                            />
+                            <div className="space-y-4">
+                                {/* Current/Selected Image Preview */}
+                                {imagePreview && (
+                                    <div className="relative inline-block">
+                                        <img
+                                            src={imagePreview}
+                                            alt="Item preview"
+                                            className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={removeImage}
+                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                                        >
+                                            ×
+                                        </button>
+                                        {item?.image && !selectedImage && (
+                                            <span className="absolute -bottom-2 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                                                Current
+                                            </span>
+                                        )}
+                                        {selectedImage && (
+                                            <span className="absolute -bottom-2 left-0 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                                                New
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Upload Area */}
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="hidden"
+                                        id="image-upload"
+                                    />
+                                    <label
+                                        htmlFor="image-upload"
+                                        className="cursor-pointer flex flex-col items-center"
+                                    >
+                                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mb-1">
+                                            {selectedImage ? selectedImage.name : 'Click to upload new image'}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            PNG, JPG, GIF up to 5MB
+                                        </p>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Form Actions */}
