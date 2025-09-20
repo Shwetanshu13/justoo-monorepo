@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { orders, orderItems, customerAddresses } from "../db/schema.js";
+import { orders, orderItems, customerAddresses } from "../../../../packages/db/schema.js";
 import { eq, and, sql } from "drizzle-orm";
 
 // 1. Get the current order assigned to the rider (status: out_for_delivery or ready, etc.)

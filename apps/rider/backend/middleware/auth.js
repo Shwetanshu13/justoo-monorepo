@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { db } from "../db/index.js";
-import { justooRiders } from "../db/schema.js";
+import { justooRiders } from "../../../../packages/db/schema.js";
 import { eq } from "drizzle-orm";
 
 const JWT_SECRET =

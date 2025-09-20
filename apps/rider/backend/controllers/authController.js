@@ -1,6 +1,6 @@
 import { db } from "../db/index.js";
-import { justooRiders as usersTable } from "../db/schema.js";
-import { eq, and, or } from "drizzle-orm";
+import { justooRiders as usersTable } from "../../../../packages/db/schema.js";
+import { eq, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 // Firebase integration fully removed

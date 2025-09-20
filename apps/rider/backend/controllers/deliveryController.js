@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { orders, deliveries } from "../db/schema.js";
+import { orders } from "../../../../packages/db/schema.js";
 import { eq, and, sql } from "drizzle-orm";
 
 // 1. Start delivery for an order

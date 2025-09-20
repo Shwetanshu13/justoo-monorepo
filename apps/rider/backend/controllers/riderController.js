@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { justooRiders as ridersTable, orders, customerAddresses } from "../db/schema.js";
+import { justooRiders as ridersTable, orders, customerAddresses } from "../../../../packages/db/schema.js";
 import { eq, and, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
