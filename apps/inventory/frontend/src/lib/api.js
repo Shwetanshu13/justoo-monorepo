@@ -47,8 +47,28 @@ export const authAPI = {
 export const inventoryAPI = {
     getAllItems: (params) => api.get('/inventory/items', { params }),
     getItemById: (id) => api.get(`/inventory/items/${id}`),
-    addItem: (data) => api.post('/inventory/items', data),
-    updateItem: (id, data) => api.put(`/inventory/items/${id}`, data),
+    addItem: (data) => {
+        // Check if data is FormData (for file uploads)
+        if (data instanceof FormData) {
+            return api.post('/inventory/items', data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+        }
+        return api.post('/inventory/items', data);
+    },
+    updateItem: (id, data) => {
+        // Check if data is FormData (for file uploads)
+        if (data instanceof FormData) {
+            return api.put(`/inventory/items/${id}`, data, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+        }
+        return api.put(`/inventory/items/${id}`, data);
+    },
     deleteItem: (id) => api.delete(`/inventory/items/${id}`),
     getInStockItems: () => api.get('/inventory/stock/in-stock'),
     getOutOfStockItems: () => api.get('/inventory/stock/out-of-stock'),

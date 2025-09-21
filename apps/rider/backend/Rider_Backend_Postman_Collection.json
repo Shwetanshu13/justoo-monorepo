@@ -1,0 +1,583 @@
+{
+  "info": {
+    "name": "Rider Backend API Collection",
+    "description": "Complete Postman collection for Rider Backend API testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3006/api",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rider_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "order_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Rider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"rider@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"+1234567890\",\n  \"vehicleType\": \"motorcycle\",\n  \"vehicleNumber\": \"ABC123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new rider account"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Rider",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.token) {",
+                  "        pm.collectionVariables.set('auth_token', response.token);",
+                  "        pm.collectionVariables.set('rider_id', response.rider.id);",
+                  "        console.log('Token saved:', response.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"rider@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as a rider and save authentication token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rider Management",
+      "item": [
+        {
+          "name": "Get Rider Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/rider/profile",
+              "host": ["{{base_url}}"],
+              "path": ["rider", "profile"]
+            },
+            "description": "Get current rider's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rider Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"+1234567890\",\n  \"vehicleType\": \"car\",\n  \"vehicleNumber\": \"XYZ789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rider/profile",
+              "host": ["{{base_url}}"],
+              "path": ["rider", "profile"]
+            },
+            "description": "Update rider's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rider Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rider/password",
+              "host": ["{{base_url}}"],
+              "path": ["rider", "password"]
+            },
+            "description": "Change rider's password"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rider Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/rider/status",
+              "host": ["{{base_url}}"],
+              "path": ["rider", "status"]
+            },
+            "description": "Update rider's availability status (active, busy, inactive)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Rider Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/rider/stats",
+              "host": ["{{base_url}}"],
+              "path": ["rider", "stats"]
+            },
+            "description": "Get rider's delivery statistics and earnings"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Order Management",
+      "item": [
+        {
+          "name": "Get Current Order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/current",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "current"]
+            },
+            "description": "Get the current order assigned to the rider"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Assigned Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/assigned?page=1&limit=10&status=confirmed",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "assigned"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "confirmed"
+                }
+              ]
+            },
+            "description": "Get all orders assigned to the rider with pagination and status filter"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Completed Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/completed?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "completed"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all completed orders for the rider with pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}"]
+            },
+            "description": "Get detailed information about a specific order"
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/accept",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "accept"]
+            },
+            "description": "Accept an order assignment"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"out_for_delivery\",\n  \"notes\": \"Order is ready for pickup\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/orders/{{order_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["orders", "{{order_id}}", "status"]
+            },
+            "description": "Update order status (confirmed, preparing, ready, out_for_delivery, delivered, cancelled)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Delivery Management",
+      "item": [
+        {
+          "name": "Start Delivery",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estimatedDeliveryTime\": \"2024-01-15T14:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/delivery/{{order_id}}/start",
+              "host": ["{{base_url}}"],
+              "path": ["delivery", "{{order_id}}", "start"]
+            },
+            "description": "Start delivery for an order"
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Delivery",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deliveryNotes\": \"Delivered successfully to customer\",\n  \"customerSignature\": \"base64_encoded_signature\",\n  \"deliveryPhoto\": \"base64_encoded_photo\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/delivery/{{order_id}}/complete",
+              "host": ["{{base_url}}"],
+              "path": ["delivery", "{{order_id}}", "complete"]
+            },
+            "description": "Mark delivery as completed"
+          },
+          "response": []
+        },
+        {
+          "name": "Fail Delivery",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"failureReason\": \"Customer not available\",\n  \"failureNotes\": \"Called customer multiple times, no response\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/delivery/{{order_id}}/fail",
+              "host": ["{{base_url}}"],
+              "path": ["delivery", "{{order_id}}", "fail"]
+            },
+            "description": "Mark delivery as failed"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Delivery Progress",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060,\n  \"progressNotes\": \"Arriving in 5 minutes\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/delivery/{{order_id}}/progress",
+              "host": ["{{base_url}}"],
+              "path": ["delivery", "{{order_id}}", "progress"]
+            },
+            "description": "Update delivery progress and location"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Delivery History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/delivery/history?page=1&limit=10&status=delivered",
+              "host": ["{{base_url}}"],
+              "path": ["delivery", "history"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "delivered"
+                }
+              ]
+            },
+            "description": "Get delivery history for the rider"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Delivery Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/delivery/stats?period=month",
+              "host": ["{{base_url}}"],
+              "path": ["delivery", "stats"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "month"
+                }
+              ]
+            },
+            "description": "Get delivery statistics for the rider (day, week, month, year)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get rider's notifications with pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Notification Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/count",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "count"]
+            },
+            "description": "Get unread notification count"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/{{notification_id}}/read",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "{{notification_id}}", "read"]
+            },
+            "description": "Mark specific notification as read"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All Notifications as Read",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/read-all",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "read-all"]
+            },
+            "description": "Mark all notifications as read"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/{{notification_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "{{notification_id}}"]
+            },
+            "description": "Delete a notification"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set base URL if not set",
+          "if (!pm.collectionVariables.get('base_url')) {",
+          "    pm.collectionVariables.set('base_url', 'http://localhost:3006/api');",
+          "}"
+        ]
+      }
+    }
+  ]
+}

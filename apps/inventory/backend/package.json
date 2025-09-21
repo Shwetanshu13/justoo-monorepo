@@ -26,12 +26,14 @@
   "dependencies": {
     "@justoo/db": "workspace:*",
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.4",
     "express": "4.18.2",
     "jsonwebtoken": "^9.0.2",
     "mongo": "^0.1.0",
+    "multer": "^2.0.2",
     "pg": "^8.16.3"
   },
   "devDependencies": {

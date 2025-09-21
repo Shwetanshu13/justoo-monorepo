@@ -3,6 +3,9 @@ import cors from "cors";
 import { checkDatabaseConnection } from "./db/index.js";
 import authRoutes from "./routes/authRoute.js";
 import orderRoutes from "./routes/orderRoute.js";
+import riderRoutes from "./routes/riderRoute.js";
+import notificationRoutes from "./routes/notificationRoute.js";
+import deliveryRoutes from "./routes/deliveryRoute.js";
 
 const app = express();
 const PORT = process.env.RIDER_BACKEND_PORT || 3006;
@@ -12,8 +15,10 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
-
 app.use("/api/orders", orderRoutes);
+app.use("/api/rider", riderRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/delivery", deliveryRoutes);
 
 app.listen(PORT, () => {
     try {

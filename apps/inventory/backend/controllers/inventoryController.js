@@ -1,6 +1,24 @@
 import { db } from '../db/index.js';
 import { items as itemTable } from '@justoo/db';
 import { eq, sql, and } from 'drizzle-orm';
+import { uploadImage, deleteImage } from '../config/cloudinary.js';
+import multer from 'multer';
+
+// Configure multer for memory storage
+const storage = multer.memoryStorage();
+export const upload = multer({
+    storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'), false);
+        }
+    }
+});
 
 // Valid units enum
 export const VALID_UNITS = ['kg', 'grams', 'ml', 'litre', 'pieces', 'dozen', 'packet', 'bottle', 'can'];
@@ -41,6 +59,25 @@ export const addItem = async (req, res) => {
             });
         }
 
+        let imageUrl = null;
+        let imagePublicId = null;
+
+        // Handle image upload if provided
+        if (req.file) {
+            try {
+                const uploadResult = await uploadImage(req.file.buffer);
+                imageUrl = uploadResult.url;
+                imagePublicId = uploadResult.publicId;
+            } catch (uploadError) {
+                console.error('Image upload failed:', uploadError);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to upload image',
+                    error: uploadError.message
+                });
+            }
+        }
+
         const newItem = await db.insert(itemTable).values({
             name: name.trim(),
             description: description || null,
@@ -50,6 +87,8 @@ export const addItem = async (req, res) => {
             discount: discount ? parseFloat(discount).toFixed(2) : '0.00',
             unit,
             category: category || null,
+            image: imageUrl,
+            imagePublicId: imagePublicId,
             updatedAt: new Date()
         }).returning();
 
@@ -117,6 +156,31 @@ export const editItem = async (req, res) => {
             });
         }
 
+        let imageUrl = existingItem[0].image;
+        let imagePublicId = existingItem[0].imagePublicId;
+
+        // Handle image update if provided
+        if (req.file) {
+            try {
+                // Delete old image if exists
+                if (existingItem[0].imagePublicId) {
+                    await deleteImage(existingItem[0].imagePublicId);
+                }
+
+                // Upload new image
+                const uploadResult = await uploadImage(req.file.buffer);
+                imageUrl = uploadResult.url;
+                imagePublicId = uploadResult.publicId;
+            } catch (uploadError) {
+                console.error('Image upload failed:', uploadError);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to upload image',
+                    error: uploadError.message
+                });
+            }
+        }
+
         // Build update object with only provided fields
         const updateData = { updatedAt: new Date() };
         if (name !== undefined) updateData.name = name.trim();
@@ -128,6 +192,10 @@ export const editItem = async (req, res) => {
         if (unit !== undefined) updateData.unit = unit;
         if (category !== undefined) updateData.category = category;
         if (isActive !== undefined) updateData.isActive = isActive ? 1 : 0;
+
+        // Update image fields
+        updateData.image = imageUrl;
+        updateData.imagePublicId = imagePublicId;
 
         const updatedItem = await db.update(itemTable)
             .set(updateData)
@@ -174,6 +242,16 @@ export const deleteItem = async (req, res) => {
         }
 
         if (permanent === 'true') {
+            // Delete image from Cloudinary if exists
+            if (existingItem[0].imagePublicId) {
+                try {
+                    await deleteImage(existingItem[0].imagePublicId);
+                } catch (imageDeleteError) {
+                    console.error('Failed to delete image from Cloudinary:', imageDeleteError);
+                    // Continue with deletion even if image deletion fails
+                }
+            }
+
             // Hard delete
             await db.delete(itemTable).where(eq(itemTable.id, parseInt(id)));
 

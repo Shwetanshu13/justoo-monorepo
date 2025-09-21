@@ -1,7 +1,7 @@
 // apps/backend/src/lib/db.ts
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import * as schema from "./schema.js";
+import * as schema from "../../../../packages/db/schema.js";
 import { conf } from "../config/conf.js";
 import { sql } from "drizzle-orm";
 
