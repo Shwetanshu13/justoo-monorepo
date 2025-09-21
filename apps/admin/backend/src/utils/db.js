@@ -2,18 +2,6 @@
 import db from '../config/dbConfig.js';
 import { eq } from 'drizzle-orm';
 
-// Generic database helper functions
-
-// export const findByField = async (table, field, value) => {
-//     try {
-//         const result = await db.select().from(table).where(eq(table[field], value));
-//         return result[0] || null;
-//     } catch (error) {
-//         console.error(`Error finding record by ${field.name}:`, error);
-//         throw error;
-//     }
-// };
-
 export const findById = async (table, id) => {
     try {
         const result = await db.select().from(table).where(eq(table.id, id));

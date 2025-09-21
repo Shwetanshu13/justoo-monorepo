@@ -193,10 +193,10 @@ const getFinancialAnalytics = async () => {
         .select({
             range: sql`
                 CASE 
-                    WHEN ${items.price} <= 10 THEN 'Under $10'
-                    WHEN ${items.price} <= 50 THEN '$10 - $50'
-                    WHEN ${items.price} <= 100 THEN '$50 - $100'
-                    ELSE 'Over $100'
+                    WHEN ${items.price} <= 100 THEN 'Under ₹100'
+                    WHEN ${items.price} <= 500 THEN '₹100 - ₹500'
+                    WHEN ${items.price} <= 2000 THEN '₹500 - ₹2000'
+                    ELSE 'Over ₹2000'
                 END
             `,
             count: count(),
@@ -206,10 +206,10 @@ const getFinancialAnalytics = async () => {
         .where(eq(items.isActive, 1))
         .groupBy(sql`
             CASE 
-                WHEN ${items.price} <= 10 THEN 'Under $10'
-                WHEN ${items.price} <= 50 THEN '$10 - $50'
-                WHEN ${items.price} <= 100 THEN '$50 - $100'
-                ELSE 'Over $100'
+                WHEN ${items.price} <= 100 THEN 'Under ₹100'
+                WHEN ${items.price} <= 500 THEN '₹100 - ₹500'
+                WHEN ${items.price} <= 2000 THEN '₹500 - ₹2000'
+                ELSE 'Over ₹2000'
             END
         `);
 
@@ -348,128 +348,6 @@ export const getLowStockAlerts = async (req, res) => {
         return errorResponse(res, 'Failed to retrieve low stock alerts', 500);
     }
 };
-
-// Add new item
-// export const addItem = async (req, res) => {
-//     try {
-//         const {
-//             name,
-//             price,
-//             quantity,
-//             unit,
-//             description,
-//             category,
-//             minStockLevel = 10,
-//             discount = 0
-//         } = req.body;
-
-//         // Validation
-//         if (!name || !price || !unit) {
-//             return errorResponse(res, 'Name, price, and unit are required', 400);
-//         }
-
-//         if (price <= 0) {
-//             return errorResponse(res, 'Price must be greater than 0', 400);
-//         }
-
-//         if (quantity < 0) {
-//             return errorResponse(res, 'Quantity cannot be negative', 400);
-//         }
-
-//         const newItem = await db
-//             .insert(items)
-//             .values({
-//                 name,
-//                 price: parseFloat(price),
-//                 quantity: parseInt(quantity) || 0,
-//                 unit,
-//                 description,
-//                 category,
-//                 minStockLevel: parseInt(minStockLevel),
-//                 discount: parseFloat(discount) || 0,
-//                 isActive: 1
-//             })
-//             .returning();
-
-//         return successResponse(res, 'Item added successfully', newItem[0], 201);
-//     } catch (error) {
-//         console.error('Error adding item:', error);
-//         return errorResponse(res, 'Failed to add item', 500);
-//     }
-// };
-
-// Update item
-// export const updateItem = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const updateData = req.body;
-
-//         if (!id) {
-//             return errorResponse(res, 'Item ID is required', 400);
-//         }
-
-//         // Remove fields that shouldn't be updated directly
-//         delete updateData.id;
-//         delete updateData.createdAt;
-
-//         // Validate price if provided
-//         if (updateData.price && updateData.price <= 0) {
-//             return errorResponse(res, 'Price must be greater than 0', 400);
-//         }
-
-//         // Validate quantity if provided
-//         if (updateData.quantity && updateData.quantity < 0) {
-//             return errorResponse(res, 'Quantity cannot be negative', 400);
-//         }
-
-//         const updatedItem = await db
-//             .update(items)
-//             .set({
-//                 ...updateData,
-//                 updatedAt: new Date().toISOString()
-//             })
-//             .where(eq(items.id, parseInt(id)))
-//             .returning();
-
-//         if (updatedItem.length === 0) {
-//             return errorResponse(res, 'Item not found', 404);
-//         }
-
-//         return successResponse(res, 'Item updated successfully', updatedItem[0]);
-//     } catch (error) {
-//         console.error('Error updating item:', error);
-//         return errorResponse(res, 'Failed to update item', 500);
-//     }
-// };
-
-// Delete item (soft delete by setting isActive to 0)
-// export const deleteItem = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-
-//         if (!id) {
-//             return errorResponse(res, 'Item ID is required', 400);
-//         }
-
-//         const deletedItem = await db
-//             .update(items)
-//             .set({
-//                 isActive: 0,
-//                 updatedAt: new Date().toISOString()
-//             })
-//             .where(eq(items.id, parseInt(id)))
-//             .returning();
-
-//         if (deletedItem.length === 0) {
-//             return errorResponse(res, 'Item not found', 404);
-//         }
-
-//         return successResponse(res, 'Item deleted successfully', deletedItem[0]);
-//     } catch (error) {
-//         console.error('Error deleting item:', error);
-//         return errorResponse(res, 'Failed to delete item', 500);
-//     }
-// };
 
 // Get item by ID
 export const getItemById = async (req, res) => {
