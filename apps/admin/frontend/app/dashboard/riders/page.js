@@ -363,16 +363,24 @@ export default function RidersPage() {
         if (window.confirm(`Are you sure you want to delete rider ${rider.name || 'this rider'}?`)) {
             try {
                 const response = await api.delete(`/riders/${rider.id}`);
+                const responseData = response.data || response;
 
-                if (response.success) {
+                if (responseData.success) {
                     toast.success('Rider deleted successfully');
                     fetchRiders();
                 } else {
-                    toast.error(response.error || 'Failed to delete rider');
+                    toast.error(responseData.error || 'Failed to delete rider');
                 }
             } catch (error) {
                 console.error('Error deleting rider:', error);
-                toast.error('Failed to delete rider');
+
+                if (error.response?.status === 404) {
+                    toast.error('Rider not found');
+                } else if (error.response?.data?.error) {
+                    toast.error(error.response.data.error);
+                } else {
+                    toast.error('Failed to delete rider');
+                }
             }
         }
     };
@@ -382,16 +390,22 @@ export default function RidersPage() {
 
         try {
             const response = await api.put(`/riders/${rider.id}`, { status: newStatus });
+            const responseData = response.data || response;
 
-            if (response.success) {
+            if (responseData.success) {
                 toast.success(`Rider ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
                 fetchRiders();
             } else {
-                toast.error(response.error || 'Failed to update rider status');
+                toast.error(responseData.error || 'Failed to update rider status');
             }
         } catch (error) {
             console.error('Error updating rider status:', error);
-            toast.error('Failed to update rider status');
+
+            if (error.response?.data?.error) {
+                toast.error(error.response.data.error);
+            } else {
+                toast.error('Failed to update rider status');
+            }
         }
     };
 
@@ -406,16 +420,29 @@ export default function RidersPage() {
                 response = await api.post('/riders', formData);
             }
 
-            if (response.success) {
+            // Check if response has data property (axios response structure)
+            const responseData = response.data || response;
+
+            if (responseData.success) {
                 toast.success(`Rider ${editingRider ? 'updated' : 'created'} successfully`);
                 setShowModal(false);
                 fetchRiders();
             } else {
-                toast.error(response.error || `Failed to ${editingRider ? 'update' : 'create'} rider`);
+                toast.error(responseData.error || `Failed to ${editingRider ? 'update' : 'create'} rider`);
             }
         } catch (error) {
             console.error('Error submitting rider:', error);
-            toast.error(`Failed to ${editingRider ? 'update' : 'create'} rider`);
+
+            // Handle specific error cases
+            if (error.response?.status === 409) {
+                const errorMessage = error.response.data?.error || 'Phone number or email already exists';
+                toast.error(errorMessage);
+            } else if (error.response?.status === 400) {
+                const errorMessage = error.response.data?.error || 'Invalid data provided';
+                toast.error(errorMessage);
+            } else {
+                toast.error(`Failed to ${editingRider ? 'update' : 'create'} rider`);
+            }
         } finally {
             setSubmitting(false);
         }
