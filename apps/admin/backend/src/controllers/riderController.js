@@ -4,7 +4,7 @@ import { justoo_riders as riders, orders, orderItems } from '@justoo/db';
 import { eq, and, count, sum, avg, desc, asc, sql, between, or } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { errorResponse, successResponse } from '../utils/response.js';
-
+const SALT_ROUNDS = process.env.SALT_ROUNDS || 10;
 // Add new rider
 export const addRider = async (req, res) => {
     try {
@@ -111,7 +111,6 @@ export const addRider = async (req, res) => {
     }
 };
 
-// Remove rider (soft delete)
 export const removeRider = async (req, res) => {
     try {
         const { id } = req.params;
@@ -567,7 +566,7 @@ export const changeRiderPassword = async (req, res) => {
         }
 
         // Hash new password
-        const hashedPassword = await bcrypt.hash(newPassword, 12);
+        const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
         // Update password
         await db

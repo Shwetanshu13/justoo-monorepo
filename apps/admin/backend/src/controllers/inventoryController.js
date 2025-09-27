@@ -226,10 +226,10 @@ const getFinancialAnalytics = async () => {
         .select({
             range: sql`
                 CASE 
-                    WHEN ${items.price} <= 10 THEN 'Under $10'
-                    WHEN ${items.price} <= 50 THEN '$10 - $50'
-                    WHEN ${items.price} <= 100 THEN '$50 - $100'
-                    ELSE 'Over $100'
+                    WHEN ${items.price} <= 100 THEN 'Under ₹100'
+                    WHEN ${items.price} <= 500 THEN '₹100 - ₹500'
+                    WHEN ${items.price} <= 2000 THEN '₹500 - ₹2000'
+                    ELSE 'Over ₹2000'
                 END
             `,
             count: count(),
@@ -239,10 +239,10 @@ const getFinancialAnalytics = async () => {
         .where(eq(items.isActive, 1))
         .groupBy(sql`
             CASE 
-                WHEN ${items.price} <= 10 THEN 'Under $10'
-                WHEN ${items.price} <= 50 THEN '$10 - $50'
-                WHEN ${items.price} <= 100 THEN '$50 - $100'
-                ELSE 'Over $100'
+                WHEN ${items.price} <= 100 THEN 'Under ₹100'
+                WHEN ${items.price} <= 500 THEN '₹100 - ₹500'
+                WHEN ${items.price} <= 2000 THEN '₹500 - ₹2000'
+                ELSE 'Over ₹2000'
             END
         `);
 

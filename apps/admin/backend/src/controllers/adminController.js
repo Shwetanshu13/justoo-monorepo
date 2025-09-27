@@ -11,6 +11,8 @@ import {
     getPaymentAnalytics
 } from '../utils/analytics.js';
 
+const SALT_ROUNDS = process.env.SALT_ROUNDS || 10;
+
 export const addAdmin = async (req, res) => {
     const { username, email, password, role = 'admin' } = req.body;
 
@@ -35,7 +37,7 @@ export const addAdmin = async (req, res) => {
         return errorResponse(res, 'Password must be at least 6 characters long', 400);
     }
 
-    // Role validation - Admin backend only (riders have separate table)
+    // Role validation
     const validRoles = ['superadmin', 'admin', 'inventory_admin'];
     if (!validRoles.includes(role)) {
         return errorResponse(res, 'Invalid role. Must be one of: superadmin, admin, inventory_admin', 400);
@@ -64,7 +66,7 @@ export const addAdmin = async (req, res) => {
         }
 
         // Hash password
-        const hashedPassword = await bcrypt.hash(password, 12);
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
         // Create admin user
         const newAdmin = await db

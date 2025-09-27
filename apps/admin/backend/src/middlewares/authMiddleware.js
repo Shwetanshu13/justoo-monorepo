@@ -4,7 +4,6 @@ import { unauthorizedResponse } from '../utils/response.js';
 
 const authMiddleware = (req, res, next) => {
     try {
-        // Try to get token from cookie first, then from Authorization header
         let token = req.cookies?.auth_token;
 
         if (!token) {

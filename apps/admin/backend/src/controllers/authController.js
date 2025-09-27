@@ -1,11 +1,12 @@
 // Auth Controller
 import db from '../config/dbConfig.js';
 import { findByUsername } from '../utils/db.js';
-import { comparePassword, generateToken, extractTokenFromHeader } from '../utils/auth.js';
+import { comparePassword, generateToken, extractTokenFromHeader, hashPassword } from '../utils/auth.js';
 import { unauthorizedResponse, errorResponse, successResponse } from '../utils/response.js';
 import { justoo_admins as admin } from '@justoo/db';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
+const SALT_ROUNDS = process.env.SALT_ROUNDS || 10;
 
 export const signin = async (req, res) => {
     const { username, password } = req.body;
@@ -79,6 +80,7 @@ export const refreshToken = async (req, res) => {
         // Generate new token
         const newToken = generateToken({
             id: user.id,
+            username: user.username,
             role: user.role,
             userType: user.userType
         });
@@ -179,12 +181,13 @@ export const changePassword = async (req, res) => {
             return errorResponse(res, 'User not found', 404);
         }
 
-        const isValid = await comparePassword(currentPassword, rows[0].password);
+        const currentPasswordHashed = await hashPassword(currentPassword);
+        const isValid = await comparePassword(currentPasswordHashed, rows[0].password);
         if (!isValid) {
             return unauthorizedResponse(res, 'Current password is incorrect');
         }
 
-        const hashed = await bcrypt.hash(newPassword, 12);
+        const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
         await db.update(admin).set({ password: hashed }).where(eq(admin.id, user.id));
 
         return successResponse(res, null, 'Password updated successfully');
