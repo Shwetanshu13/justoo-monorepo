@@ -1,7 +1,7 @@
 import { db } from '../db/index.js';
 import { items as itemTable } from '@justoo/db';
 import { eq, sql, and } from 'drizzle-orm';
-import { uploadImage, deleteImage } from '../config/cloudinary.js';
+import { uploadImage, deleteImage, processItemsImages, processItemImage } from '../config/cloudinary.js';
 import multer from 'multer';
 
 // Configure multer for memory storage
@@ -95,7 +95,7 @@ export const addItem = async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'Item added successfully',
-            data: newItem[0]
+            data: processItemImage(newItem[0])
         });
 
     } catch (error) {
@@ -205,7 +205,7 @@ export const editItem = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Item updated successfully',
-            data: updatedItem[0]
+            data: processItemImage(updatedItem[0])
         });
 
     } catch (error) {
@@ -272,7 +272,7 @@ export const deleteItem = async (req, res) => {
             res.status(200).json({
                 success: true,
                 message: 'Item deactivated successfully',
-                data: updatedItem[0]
+                data: processItemImage(updatedItem[0])
             });
         }
 
@@ -322,7 +322,7 @@ export const listInStockItems = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: items,
+            data: processItemsImages(items),
             pagination: {
                 page: parseInt(page),
                 limit: parseInt(limit),
@@ -377,7 +377,7 @@ export const listOutOfStockItems = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: items,
+            data: processItemsImages(items),
             pagination: {
                 page: parseInt(page),
                 limit: parseInt(limit),
@@ -433,7 +433,7 @@ export const listLowStockItems = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: items,
+            data: processItemsImages(items),
             pagination: {
                 page: parseInt(page),
                 limit: parseInt(limit),
@@ -518,7 +518,7 @@ export const getAllItems = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: items,
+            data: processItemsImages(items),
             pagination: {
                 page: parseInt(page),
                 limit: parseInt(limit),
@@ -560,7 +560,7 @@ export const getItemById = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: item[0]
+            data: processItemImage(item[0])
         });
 
     } catch (error) {
