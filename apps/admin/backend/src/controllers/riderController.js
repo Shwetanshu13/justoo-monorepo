@@ -15,12 +15,18 @@ export const addRider = async (req, res) => {
             vehicle_type,
             vehicle_number,
             license_number,
+            password,
             status = 'active'
         } = req.body;
 
         // Validation
-        if (!name || !phone || !vehicle_type || !vehicle_number) {
-            return errorResponse(res, 'Name, phone, vehicle type, and vehicle number are required', 400);
+        if (!name || !phone || !vehicle_type || !vehicle_number || !password) {
+            return errorResponse(res, 'Name, phone, vehicle type, vehicle number, and password are required', 400);
+        }
+
+        // Password validation
+        if (password.length < 6) {
+            return errorResponse(res, 'Password must be at least 6 characters long', 400);
         }
 
         // Phone validation
@@ -76,6 +82,9 @@ export const addRider = async (req, res) => {
         // Generate username from name (lowercase, replace spaces with underscores)
         const username = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') + '_' + Date.now().toString().slice(-4);
 
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 12);
+
         // Create rider
         const newRider = await db
             .insert(riders)
@@ -84,6 +93,7 @@ export const addRider = async (req, res) => {
                 name,
                 phone,
                 email: email || null,
+                password: hashedPassword,
                 vehicleType: vehicle_type,
                 vehicleNumber: vehicle_number,
                 licenseNumber: license_number || null,
@@ -271,6 +281,7 @@ export const updateRider = async (req, res) => {
             vehicle_type,
             vehicle_number,
             license_number,
+            password,
             status,
             isActive
         } = req.body;
@@ -319,6 +330,10 @@ export const updateRider = async (req, res) => {
             }
         }
 
+        if (password && password.length < 6) {
+            return errorResponse(res, 'Password must be at least 6 characters long', 400);
+        }
+
         // Check for duplicate phone/email if being updated
         if (phone || email) {
             const duplicateCheck = await db
@@ -354,6 +369,11 @@ export const updateRider = async (req, res) => {
         if (license_number !== undefined) updateData.licenseNumber = license_number;
         if (status !== undefined) updateData.status = status;
         if (isActive !== undefined) updateData.isActive = parseInt(isActive);
+
+        // Hash password if provided
+        if (password && password.trim() !== '') {
+            updateData.password = await bcrypt.hash(password, 12);
+        }
 
         const updatedRider = await db
             .update(riders)

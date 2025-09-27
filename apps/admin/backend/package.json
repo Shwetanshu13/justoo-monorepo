@@ -19,11 +19,13 @@
     "@justoo/db": "workspace:*",
     "@neondatabase/serverless": "^1.0.1",
     "bcrypt": "^6.0.0",
+    "cloudinary": "^2.7.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.44.4",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "pg": "^8.16.3",
     "ws": "^8.18.3"
   },

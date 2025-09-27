@@ -121,6 +121,7 @@ const RiderModal = ({ isOpen, onClose, onSubmit, rider, loading }) => {
         vehicle_type: 'bike',
         vehicle_number: '',
         license_number: '',
+        password: '',
         status: 'active',
     });
 
@@ -133,6 +134,7 @@ const RiderModal = ({ isOpen, onClose, onSubmit, rider, loading }) => {
                 vehicle_type: rider.vehicle_type || 'bike',
                 vehicle_number: rider.vehicle_number || '',
                 license_number: rider.license_number || '',
+                password: '', // Always empty for security when editing
                 status: rider.status || 'active',
             });
         } else {
@@ -143,6 +145,7 @@ const RiderModal = ({ isOpen, onClose, onSubmit, rider, loading }) => {
                 vehicle_type: 'bike',
                 vehicle_number: '',
                 license_number: '',
+                password: '',
                 status: 'active',
             });
         }
@@ -208,6 +211,21 @@ const RiderModal = ({ isOpen, onClose, onSubmit, rider, loading }) => {
                                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                                                 placeholder="Enter email address"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Password {!rider && '*'}
+                                            </label>
+                                            <input
+                                                type="password"
+                                                required={!rider}
+                                                value={formData.password}
+                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                placeholder={rider ? "Leave blank to keep current password" : "Enter password (min 6 characters)"}
+                                                minLength={6}
                                             />
                                         </div>
 

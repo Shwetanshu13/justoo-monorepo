@@ -2,6 +2,27 @@ import db from '../config/dbConfig.js';
 import { items, orders, orderItems } from '@justoo/db';
 import { eq, and, count, sum, avg, desc, asc, sql, gt, lt, isNull } from 'drizzle-orm';
 import { errorResponse, successResponse } from '../utils/response.js';
+import { uploadImage, deleteImage, processItemsImages, processItemImage } from '../config/cloudinary.js';
+import multer from 'multer';
+
+// Configure multer for memory storage
+const storage = multer.memoryStorage();
+export const upload = multer({
+    storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'), false);
+        }
+    }
+});
+
+// Valid units enum
+export const VALID_UNITS = ['kg', 'grams', 'ml', 'litre', 'pieces', 'dozen', 'packet', 'bottle', 'can'];
 
 // Get all items with pagination and filtering
 export const getAllItems = async (req, res) => {
@@ -52,8 +73,11 @@ export const getAllItems = async (req, res) => {
         }
         const totalItems = await countQuery;
 
+        // Process images for admin response
+        const processedItems = processItemsImages(itemsList);
+
         return successResponse(res, 'Items retrieved successfully', {
-            items: itemsList,
+            items: processedItems,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages: Math.ceil(totalItems[0].count / limit),
@@ -101,7 +125,7 @@ export const getInventoryAnalytics = async (req, res) => {
 // Stock Level Analytics Helper
 const getStockLevelAnalytics = async () => {
     // Low stock items (quantity <= minStockLevel)
-    const lowStockItems = await db
+    const lowStockItemsRaw = await db
         .select()
         .from(items)
         .where(and(
@@ -110,7 +134,7 @@ const getStockLevelAnalytics = async () => {
         ));
 
     // Out of stock items
-    const outOfStockItems = await db
+    const outOfStockItemsRaw = await db
         .select()
         .from(items)
         .where(and(
@@ -119,13 +143,18 @@ const getStockLevelAnalytics = async () => {
         ));
 
     // Overstock items (quantity > minStockLevel * 5)
-    const overstockItems = await db
+    const overstockItemsRaw = await db
         .select()
         .from(items)
         .where(and(
             sql`${items.quantity} > ${items.minStockLevel} * 5`,
             eq(items.isActive, 1)
         ));
+
+    // Process images for these items
+    const lowStockItems = processItemsImages(lowStockItemsRaw);
+    const outOfStockItems = processItemsImages(outOfStockItemsRaw);
+    const overstockItems = processItemsImages(overstockItemsRaw);
 
     // Total active items
     const totalActiveItems = await db
@@ -173,7 +202,7 @@ const getFinancialAnalytics = async () => {
         .where(eq(items.isActive, 1));
 
     // Most expensive items
-    const mostExpensive = await db
+    const mostExpensiveRaw = await db
         .select()
         .from(items)
         .where(eq(items.isActive, 1))
@@ -181,12 +210,16 @@ const getFinancialAnalytics = async () => {
         .limit(5);
 
     // Least expensive items
-    const leastExpensive = await db
+    const leastExpensiveRaw = await db
         .select()
         .from(items)
         .where(eq(items.isActive, 1))
         .orderBy(asc(items.price))
         .limit(5);
+
+    // Process images for these items
+    const mostExpensive = processItemsImages(mostExpensiveRaw);
+    const leastExpensive = processItemsImages(leastExpensiveRaw);
 
     // Price range distribution
     const priceRanges = await db
@@ -330,7 +363,7 @@ const getCategoryAnalytics = async () => {
 // Get low stock alerts
 export const getLowStockAlerts = async (req, res) => {
     try {
-        const lowStockItems = await db
+        const lowStockItemsRaw = await db
             .select()
             .from(items)
             .where(and(
@@ -338,6 +371,9 @@ export const getLowStockAlerts = async (req, res) => {
                 eq(items.isActive, 1)
             ))
             .orderBy(asc(sql`${items.quantity} - ${items.minStockLevel}`));
+
+        // Process images for response
+        const lowStockItems = processItemsImages(lowStockItemsRaw);
 
         return successResponse(res, 'Low stock alerts retrieved successfully', {
             items: lowStockItems,
@@ -349,127 +385,215 @@ export const getLowStockAlerts = async (req, res) => {
     }
 };
 
-// Add new item
-// export const addItem = async (req, res) => {
-//     try {
-//         const {
-//             name,
-//             price,
-//             quantity,
-//             unit,
-//             description,
-//             category,
-//             minStockLevel = 10,
-//             discount = 0
-//         } = req.body;
+// Add new item to inventory
+export const addItem = async (req, res) => {
+    try {
+        const {
+            name,
+            description,
+            price,
+            quantity,
+            minStockLevel,
+            discount,
+            unit,
+            category
+        } = req.body;
 
-//         // Validation
-//         if (!name || !price || !unit) {
-//             return errorResponse(res, 'Name, price, and unit are required', 400);
-//         }
+        // Validation
+        if (!name || !price || !unit) {
+            return errorResponse(res, 'Name, price, and unit are required', 400);
+        }
 
-//         if (price <= 0) {
-//             return errorResponse(res, 'Price must be greater than 0', 400);
-//         }
+        if (!VALID_UNITS.includes(unit)) {
+            return errorResponse(res, `Invalid unit. Valid units are: ${VALID_UNITS.join(', ')}`, 400);
+        }
 
-//         if (quantity < 0) {
-//             return errorResponse(res, 'Quantity cannot be negative', 400);
-//         }
+        if (price < 0 || (quantity && quantity < 0)) {
+            return errorResponse(res, 'Price and quantity cannot be negative', 400);
+        }
 
-//         const newItem = await db
-//             .insert(items)
-//             .values({
-//                 name,
-//                 price: parseFloat(price),
-//                 quantity: parseInt(quantity) || 0,
-//                 unit,
-//                 description,
-//                 category,
-//                 minStockLevel: parseInt(minStockLevel),
-//                 discount: parseFloat(discount) || 0,
-//                 isActive: 1
-//             })
-//             .returning();
+        let imageUrl = null;
+        let imagePublicId = null;
 
-//         return successResponse(res, 'Item added successfully', newItem[0], 201);
-//     } catch (error) {
-//         console.error('Error adding item:', error);
-//         return errorResponse(res, 'Failed to add item', 500);
-//     }
-// };
+        // Handle image upload if provided
+        if (req.file) {
+            try {
+                const uploadResult = await uploadImage(req.file.buffer);
+                imageUrl = uploadResult.url;
+                imagePublicId = uploadResult.publicId;
+            } catch (uploadError) {
+                console.error('Image upload failed:', uploadError);
+                return errorResponse(res, 'Failed to upload image', 500);
+            }
+        }
 
-// Update item
-// export const updateItem = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const updateData = req.body;
+        const newItem = await db.insert(items).values({
+            name: name.trim(),
+            description: description || null,
+            price: parseFloat(price).toFixed(2),
+            quantity: parseInt(quantity) || 0,
+            minStockLevel: parseInt(minStockLevel) || 10,
+            discount: discount ? parseFloat(discount).toFixed(2) : '0.00',
+            unit,
+            category: category || null,
+            image: imageUrl,
+            imagePublicId: imagePublicId,
+            isActive: 1
+        }).returning();
 
-//         if (!id) {
-//             return errorResponse(res, 'Item ID is required', 400);
-//         }
+        // Process image for response
+        const processedItem = processItemImage(newItem[0]);
 
-//         // Remove fields that shouldn't be updated directly
-//         delete updateData.id;
-//         delete updateData.createdAt;
+        return successResponse(res, 'Item added successfully', processedItem, 201);
 
-//         // Validate price if provided
-//         if (updateData.price && updateData.price <= 0) {
-//             return errorResponse(res, 'Price must be greater than 0', 400);
-//         }
+    } catch (error) {
+        console.error('Error adding item:', error);
+        return errorResponse(res, 'Failed to add item', 500);
+    }
+};
 
-//         // Validate quantity if provided
-//         if (updateData.quantity && updateData.quantity < 0) {
-//             return errorResponse(res, 'Quantity cannot be negative', 400);
-//         }
+// Edit existing item
+export const updateItem = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            name,
+            description,
+            price,
+            quantity,
+            minStockLevel,
+            discount,
+            unit,
+            category,
+            isActive
+        } = req.body;
 
-//         const updatedItem = await db
-//             .update(items)
-//             .set({
-//                 ...updateData,
-//                 updatedAt: new Date().toISOString()
-//             })
-//             .where(eq(items.id, parseInt(id)))
-//             .returning();
+        if (!id) {
+            return errorResponse(res, 'Item ID is required', 400);
+        }
 
-//         if (updatedItem.length === 0) {
-//             return errorResponse(res, 'Item not found', 404);
-//         }
+        // Check if item exists
+        const existingItem = await db.select().from(items).where(eq(items.id, parseInt(id)));
 
-//         return successResponse(res, 'Item updated successfully', updatedItem[0]);
-//     } catch (error) {
-//         console.error('Error updating item:', error);
-//         return errorResponse(res, 'Failed to update item', 500);
-//     }
-// };
+        if (existingItem.length === 0) {
+            return errorResponse(res, 'Item not found', 404);
+        }
+
+        // Validation for provided fields
+        if (unit && !VALID_UNITS.includes(unit)) {
+            return errorResponse(res, `Invalid unit. Valid units are: ${VALID_UNITS.join(', ')}`, 400);
+        }
+
+        if ((price && price < 0) || (quantity && quantity < 0)) {
+            return errorResponse(res, 'Price and quantity cannot be negative', 400);
+        }
+
+        let imageUrl = existingItem[0].image;
+        let imagePublicId = existingItem[0].imagePublicId;
+
+        // Handle image update if provided
+        if (req.file) {
+            try {
+                // Delete old image if exists
+                if (existingItem[0].imagePublicId) {
+                    await deleteImage(existingItem[0].imagePublicId);
+                }
+
+                // Upload new image
+                const uploadResult = await uploadImage(req.file.buffer);
+                imageUrl = uploadResult.url;
+                imagePublicId = uploadResult.publicId;
+            } catch (uploadError) {
+                console.error('Image upload failed:', uploadError);
+                return errorResponse(res, 'Failed to upload image', 500);
+            }
+        }
+
+        // Build update object with only provided fields
+        const updateData = { updatedAt: new Date() };
+        if (name !== undefined) updateData.name = name.trim();
+        if (description !== undefined) updateData.description = description;
+        if (price !== undefined) updateData.price = parseFloat(price).toFixed(2);
+        if (quantity !== undefined) updateData.quantity = parseInt(quantity);
+        if (minStockLevel !== undefined) updateData.minStockLevel = parseInt(minStockLevel);
+        if (discount !== undefined) updateData.discount = parseFloat(discount).toFixed(2);
+        if (unit !== undefined) updateData.unit = unit;
+        if (category !== undefined) updateData.category = category;
+        if (isActive !== undefined) updateData.isActive = isActive ? 1 : 0;
+
+        // Update image fields
+        updateData.image = imageUrl;
+        updateData.imagePublicId = imagePublicId;
+
+        const updatedItem = await db.update(items)
+            .set(updateData)
+            .where(eq(items.id, parseInt(id)))
+            .returning();
+
+        // Process image for response
+        const processedItem = processItemImage(updatedItem[0]);
+
+        return successResponse(res, 'Item updated successfully', processedItem);
+
+    } catch (error) {
+        console.error('Error updating item:', error);
+        return errorResponse(res, 'Failed to update item', 500);
+    }
+};
 
 // Delete item (soft delete by setting isActive to 0)
-// export const deleteItem = async (req, res) => {
-//     try {
-//         const { id } = req.params;
+export const deleteItem = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { permanent } = req.query; // ?permanent=true for hard delete
 
-//         if (!id) {
-//             return errorResponse(res, 'Item ID is required', 400);
-//         }
+        if (!id) {
+            return errorResponse(res, 'Item ID is required', 400);
+        }
 
-//         const deletedItem = await db
-//             .update(items)
-//             .set({
-//                 isActive: 0,
-//                 updatedAt: new Date().toISOString()
-//             })
-//             .where(eq(items.id, parseInt(id)))
-//             .returning();
+        // Check if item exists
+        const existingItem = await db.select().from(items).where(eq(items.id, parseInt(id)));
 
-//         if (deletedItem.length === 0) {
-//             return errorResponse(res, 'Item not found', 404);
-//         }
+        if (existingItem.length === 0) {
+            return errorResponse(res, 'Item not found', 404);
+        }
 
-//         return successResponse(res, 'Item deleted successfully', deletedItem[0]);
-//     } catch (error) {
-//         console.error('Error deleting item:', error);
-//         return errorResponse(res, 'Failed to delete item', 500);
-//     }
-// };
+        if (permanent === 'true') {
+            // Delete image from Cloudinary if exists
+            if (existingItem[0].imagePublicId) {
+                try {
+                    await deleteImage(existingItem[0].imagePublicId);
+                } catch (imageDeleteError) {
+                    console.error('Failed to delete image from Cloudinary:', imageDeleteError);
+                    // Continue with deletion even if image deletion fails
+                }
+            }
+
+            // Hard delete
+            await db.delete(items).where(eq(items.id, parseInt(id)));
+
+            return successResponse(res, 'Item permanently deleted', null);
+        } else {
+            // Soft delete
+            const updatedItem = await db.update(items)
+                .set({
+                    isActive: 0,
+                    updatedAt: new Date()
+                })
+                .where(eq(items.id, parseInt(id)))
+                .returning();
+
+            // Process image for response
+            const processedItem = processItemImage(updatedItem[0]);
+
+            return successResponse(res, 'Item deactivated successfully', processedItem);
+        }
+
+    } catch (error) {
+        console.error('Error deleting item:', error);
+        return errorResponse(res, 'Failed to delete item', 500);
+    }
+};
 
 // Get item by ID
 export const getItemById = async (req, res) => {
@@ -490,7 +614,10 @@ export const getItemById = async (req, res) => {
             return errorResponse(res, 'Item not found', 404);
         }
 
-        return successResponse(res, 'Item retrieved successfully', item[0]);
+        // Process image for admin response
+        const processedItem = processItemImage(item[0]);
+
+        return successResponse(res, 'Item retrieved successfully', processedItem);
     } catch (error) {
         console.error('Error getting item:', error);
         return errorResponse(res, 'Failed to retrieve item', 500);

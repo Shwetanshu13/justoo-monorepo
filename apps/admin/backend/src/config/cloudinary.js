@@ -62,6 +62,8 @@ export const deleteImage = async (publicId) => {
 
 // Generate optimized image URL with transformations
 export const getOptimizedImageUrl = (publicId, options = {}) => {
+    if (!publicId) return null;
+
     const {
         width = 400,
         height = 400,
@@ -80,7 +82,7 @@ export const getOptimizedImageUrl = (publicId, options = {}) => {
     });
 };
 
-// Process item image URLs for responses
+// Process item image URLs for admin responses
 export const processItemImage = (item) => {
     if (!item) return item;
 
